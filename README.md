@@ -243,164 +243,206 @@ d.compact()  # Dict({'a': 1, 'c': 3}) - removes None values
 d.defaults({"d": 4})  # Add default values for missing keys
 ```
 
-### Standalone Functions (Backward Compatibility)
+### Path Utilities
 
-All standalone functions are still available for backward compatibility:
+The `Path` class provides filesystem path utilities:
 
 ```python
-from utils import chunk, flatten, group_by, debounce, throttle, retry, slugify
+from utils import Path
 
-# Chunk iterables
-chunk([1, 2, 3, 4, 5], 2)  # [[1, 2], [3, 4], [5]]
+# Read and write files
+path = Path("./data/file.txt")
+path.write("Hello World")
+content = path.read()  # "Hello World"
 
-# Flatten nested lists
-flatten([[1, 2], [3, 4]])  # [1, 2, 3, 4]
+# Read and write lines
+lines = ["line1", "line2", "line3"]
+path.write_lines(lines)
+content = path.read_lines()  # ["line1", "line2", "line3"]
 
-# Group by key function
-group_by([1, 2, 3, 4], lambda x: x % 2)  # {0: [2, 4], 1: [1, 3]}
+# JSON operations
+data = {"name": "Alice", "age": 30}
+path.write_json(data)
+content = path.read_json()  # {"name": "Alice", "age": 30}
+
+# Path properties
+path.extension()  # "txt"
+path.stem()  # "file"
+```
+
+### Random Utilities
+
+The `Random` class provides random generation utilities:
+
+```python
+from utils import Random
+
+# Generate random strings
+Random.string(length=10)  # "aB3dE5fG7h"
+Random.string(length=10, chars="01")  # "0110101001"
+
+# Generate random numbers
+Random.int(min_val=1, max_val=100)  # Random int between 1-100
+Random.float(min_val=0.0, max_val=1.0)  # Random float between 0-1
+
+# Random choices
+Random.choice([1, 2, 3, 4, 5])  # Random item from list
+Random.sample([1, 2, 3, 4, 5], k=3)  # 3 random items
+Random.shuffle([1, 2, 3, 4, 5])  # Shuffled list
+
+# UUIDs
+Random.uuid4()  # UUID version 4
+Random.uuid1()  # UUID version 1
+```
+
+### Validator Utilities
+
+The `Validator` class provides validation methods:
+
+```python
+from utils import Validator
+
+# Email validation
+Validator.email("user@example.com")  # True
+Validator.email("invalid")  # False
+
+# URL validation
+Validator.url("https://example.com")  # True
+
+# Phone number validation
+Validator.phone("+1-555-123-4567")  # True
+
+# UUID validation
+Validator.uuid("550e8400-e29b-41d4-a716-446655440000")  # True
+
+# Credit card validation (Luhn algorithm)
+Validator.credit_card("4532015112830366")  # True
+
+# Hex color validation
+Validator.hex_color("#ff0000")  # True
+
+# IPv4 validation
+Validator.ipv4("192.168.1.1")  # True
+
+# Check if empty
+Validator.empty("")  # True
+Validator.empty([])  # True
+Validator.empty(None)  # True
+
+# Numeric validation
+Validator.numeric("123.45")  # True
+Validator.integer("123")  # True
+```
+
+### Decorator Utilities
+
+The `Decorators` class provides function decorators:
+
+```python
+from utils import Decorators
 
 # Debounce function calls
-@debounce(delay=0.5)
+@Decorators.debounce(delay=0.5)
 def handle_input():
     print("Input handled")
 
 # Throttle function calls
-@throttle(delay=0.5)
+@Decorators.throttle(delay=0.5)
 def handle_scroll():
     print("Scroll handled")
 
 # Retry with exponential backoff
-@retry(max_attempts=3, delay=1.0, backoff=2.0)
+@Decorators.retry(max_attempts=3, delay=1.0, backoff=2.0)
 def unreliable_api_call():
     # Will retry up to 3 times with increasing delays
     pass
 
-# Slugify text
-slugify("Hello World!")  # "hello-world"
-```
-
-### Collection Utilities
-
-```python
-from utils import unique, first, last, pluck, pick, omit, partition, deep_get, deep_set
-
-# Get unique items (preserves order)
-unique([1, 2, 2, 3, 1])  # [1, 2, 3]
-unique([{"x": 1}, {"x": 2}, {"x": 1}], key=lambda d: d["x"])  # [{'x': 1}, {'x': 2}]
-
-# Get first/last items
-first([1, 2, 3])  # 1
-last([1, 2, 3])  # 3
-
-# Extract values from list of dicts
-pluck([{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}], "name")
-# ['Alice', 'Bob']
-
-# Pick/omit dictionary keys
-pick({"a": 1, "b": 2, "c": 3}, "a", "c")  # {'a': 1, 'c': 3}
-omit({"a": 1, "b": 2, "c": 3}, "a", "c")  # {'b': 2}
-
-# Partition into two lists
-partition([1, 2, 3, 4, 5], lambda x: x % 2 == 0)  # ([2, 4], [1, 3, 5])
-
-# Deep get/set nested dict values
-deep_get({"user": {"profile": {"name": "Alice"}}}, "user.profile.name")  # "Alice"
-d = {}
-deep_set(d, "user.profile.name", "Alice")  # d = {'user': {'profile': {'name': 'Alice'}}}
-```
-
-### DateTime Utilities
-
-```python
-from utils import format_date, parse_date, human_time, start_of_day, end_of_day, is_weekend
-
-# Format dates
-format_date(datetime(2024, 1, 1, 12, 0, 0))  # "2024-01-01 12:00:00"
-format_date(datetime(2024, 1, 1), "%Y-%m-%d")  # "2024-01-01"
-
-# Parse dates
-parse_date("2024-01-01 12:00:00")  # datetime object
-
-# Human-readable relative time
-from datetime import timedelta
-human_time(datetime.now() - timedelta(hours=2))  # "2 hours ago"
-
-# Start/end of day
-start_of_day(datetime(2024, 1, 1, 14, 30))  # datetime(2024, 1, 1, 0, 0)
-end_of_day(datetime(2024, 1, 1, 14, 30))  # datetime(2024, 1, 1, 23, 59, 59, 999999)
-
-# Check weekday/weekend
-is_weekend(datetime(2024, 1, 6))  # True (Saturday)
-```
-
-### Validation Utilities
-
-```python
-from utils import is_email, is_url, is_phone, is_uuid, is_credit_card, is_empty
-
-# Email validation
-is_email("user@example.com")  # True
-is_email("invalid")  # False
-
-# URL validation
-is_url("https://example.com")  # True
-
-# Phone number validation
-is_phone("+1-555-123-4567")  # True
-
-# UUID validation
-is_uuid("550e8400-e29b-41d4-a716-446655440000")  # True
-
-# Credit card validation (Luhn algorithm)
-is_credit_card("4532015112830366")  # True
-
-# Check if empty
-is_empty("")  # True
-is_empty([])  # True
-is_empty(None)  # True
-```
-
-### Miscellaneous Utilities
-
-```python
-from utils import generate_id, hash_string, clamp, memoize, once, bytes_to_human, percentage
-
-# Generate random IDs
-generate_id(10)  # "aB3dE5fG7h"
-
-# Hash strings
-hash_string("hello")  # "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-
-# Clamp values
-clamp(15, 0, 10)  # 10
-clamp(-5, 0, 10)  # 0
-
 # Memoize function results
-@memoize
+@Decorators.memoize
 def expensive_function(x):
     return x * 2
 
 # Call function only once
-@once
+@Decorators.once
 def initialize():
     print("Initialized")
+```
 
-# Convert bytes to human-readable
-bytes_to_human(1048576)  # "1.0 MB"
+### Regex Utilities
 
-# Calculate percentage
-percentage(25, 100)  # 25.0
-percentage(1, 3, decimals=2)  # 33.33
+The `Regex` class provides pattern matching utilities:
+
+```python
+from utils import Regex
+
+# Match patterns
+Regex.match(r"^\d+$", "123")  # True
+Regex.search(r"\d+", "abc123def")  # Match object
+
+# Find all matches
+Regex.findall(r"\d+", "abc123def456")  # ["123", "456"]
+
+# Replace patterns
+Regex.sub(r"\d+", "X", "abc123def456")  # "abcXdefX"
+
+# Split by pattern
+Regex.split(r"\s+", "hello  world")  # ["hello", "world"]
+
+# Extract groups
+match = Regex.search(r"(\d+)-(\d+)", "123-456")
+Regex.groups(match)  # ("123", "456")
+
+# Validate regex
+Regex.is_valid(r"^\d+$")  # True
+```
+
+### Encoding Utilities
+
+Standalone encoding/decoding functions:
+
+```python
+from utils import (
+    base64_encode,
+    base64_decode,
+    url_encode,
+    url_decode,
+    html_encode,
+    html_decode,
+    fang,
+    defang,
+)
+
+# Base64 encoding
+encoded = base64_encode("Hello World")
+decoded = base64_decode(encoded)
+
+# URL encoding
+encoded = url_encode("hello world")  # "hello+world"
+decoded = url_decode(encoded)
+
+# HTML encoding
+encoded = html_encode("<script>")  # "&lt;script&gt;"
+decoded = html_decode(encoded)
+
+# Fang/Defang (for security analysis)
+defanged = defang("https://example.com")  # "hxxps://example[.]com"
+fanged = fang("hxxps://example[.]com")  # "https://example.com"
 ```
 
 ## Features
 
-- **String Wrapper**: Extended string class with 20+ utility methods
-- **Common Functions**: Chunking, flattening, grouping, debouncing, throttling, retrying
-- **Collection Utilities**: Unique, first/last, pluck, pick/omit, partition, deep get/set
-- **DateTime Utilities**: Formatting, parsing, relative time, weekday checks
-- **Validation**: Email, URL, phone, UUID, credit card, and more
-- **Miscellaneous**: ID generation, hashing, clamping, memoization, and more
+- **Static Utility Classes**: Organized namespaces for String, Integer, Iterable, Dict, Datetime, Path, Regex, Random, FileIO, Decorators, and Validator
+- **String Utilities**: Truncation, case conversions, manipulation, validation, and extraction
+- **Integer Utilities**: Properties, clamping, conversions, math operations, and digit manipulation
+- **Iterable Utilities**: Chunking, flattening, filtering, grouping, partitioning, and aggregations
+- **Dict Utilities**: Pick/omit keys, deep get/set, merging, transformations, and flattening
+- **Datetime Utilities**: Formatting, parsing, relative time, day/week/month boundaries, and weekday checks
+- **Path Utilities**: File I/O operations for text, lines, and JSON
+- **Random Utilities**: String generation, random numbers, choices, shuffling, and UUIDs
+- **Validator Utilities**: Email, URL, phone, UUID, credit card, hex color, IPv4, and more
+- **Decorator Utilities**: Debounce, throttle, retry, memoize, and once
+- **Regex Utilities**: Pattern matching, searching, replacing, splitting, and validation
+- **Encoding Utilities**: Base64, URL, HTML encoding/decoding, and fang/defang
 - **Type Hints**: Full type annotations for better IDE support
-- **Standalone**: No external dependencies required
+- **Zero Dependencies**: No external runtime dependencies required
 

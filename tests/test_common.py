@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from utils import chunk, debounce, flatten, group_by, retry, slugify, throttle
+from utils import Decorators, Iterable, String
 
 
 class TestChunk:
@@ -12,37 +12,37 @@ class TestChunk:
 
     def test_chunk_basic(self):
         """Test basic chunking."""
-        result = chunk([1, 2, 3, 4, 5], 2)
+        result = Iterable.chunk([1, 2, 3, 4, 5], size=2)
         assert result == [[1, 2], [3, 4], [5]]
 
     def test_chunk_exact_size(self):
         """Test chunking with exact size."""
-        result = chunk([1, 2, 3, 4], 2)
+        result = Iterable.chunk([1, 2, 3, 4], size=2)
         assert result == [[1, 2], [3, 4]]
 
     def test_chunk_single_item(self):
         """Test chunking with single item chunks."""
-        result = chunk([1, 2, 3], 1)
+        result = Iterable.chunk([1, 2, 3], size=1)
         assert result == [[1], [2], [3]]
 
     def test_chunk_larger_than_list(self):
         """Test chunking with size larger than list."""
-        result = chunk([1, 2, 3], 10)
+        result = Iterable.chunk([1, 2, 3], size=10)
         assert result == [[1, 2, 3]]
 
     def test_chunk_empty_list(self):
         """Test chunking empty list."""
-        result = chunk([], 2)
+        result = Iterable.chunk([], size=2)
         assert result == []
 
     def test_chunk_string(self):
         """Test chunking string."""
-        result = chunk("abcdef", 2)
+        result = Iterable.chunk(list("abcdef"), size=2)
         assert result == [["a", "b"], ["c", "d"], ["e", "f"]]
 
     def test_chunk_tuple(self):
         """Test chunking tuple."""
-        result = chunk((1, 2, 3, 4), 2)
+        result = Iterable.chunk(list((1, 2, 3, 4)), size=2)
         assert result == [[1, 2], [3, 4]]
 
 
@@ -51,27 +51,27 @@ class TestFlatten:
 
     def test_flatten_basic(self):
         """Test basic flattening."""
-        result = flatten([[1, 2], [3, 4]])
+        result = Iterable.flatten([[1, 2], [3, 4]])
         assert result == [1, 2, 3, 4]
 
     def test_flatten_nested(self):
         """Test flattening nested lists."""
-        result = flatten([[1, 2], [3, 4], [5]])
+        result = Iterable.flatten([[1, 2], [3, 4], [5]])
         assert result == [1, 2, 3, 4, 5]
 
     def test_flatten_empty(self):
         """Test flattening empty list."""
-        result = flatten([])
+        result = Iterable.flatten([])
         assert result == []
 
     def test_flatten_with_empty_sublists(self):
         """Test flattening with empty sublists."""
-        result = flatten([[1, 2], [], [3, 4]])
+        result = Iterable.flatten([[1, 2], [], [3, 4]])
         assert result == [1, 2, 3, 4]
 
     def test_flatten_tuples(self):
         """Test flattening tuples."""
-        result = flatten([(1, 2), (3, 4)])
+        result = Iterable.flatten([(1, 2), (3, 4)])
         assert result == [1, 2, 3, 4]
 
 
@@ -80,24 +80,24 @@ class TestGroupBy:
 
     def test_group_by_basic(self):
         """Test basic grouping."""
-        result = group_by([1, 2, 3, 4], lambda x: x % 2)
+        result = Iterable.group_by([1, 2, 3, 4], key=lambda x: x % 2)
         assert result == {0: [2, 4], 1: [1, 3]}
 
     def test_group_by_string_key(self):
         """Test grouping by string key."""
         items = [{"type": "a", "val": 1}, {"type": "b", "val": 2}, {"type": "a", "val": 3}]
-        result = group_by(items, lambda x: x["type"])
+        result = Iterable.group_by(items, key=lambda x: x["type"])
         assert len(result["a"]) == 2
         assert len(result["b"]) == 1
 
     def test_group_by_empty(self):
         """Test grouping empty list."""
-        result = group_by([], lambda x: x)
+        result = Iterable.group_by([], key=lambda x: x)
         assert result == {}
 
     def test_group_by_single_group(self):
         """Test grouping with single group."""
-        result = group_by([1, 2, 3], lambda x: "same")
+        result = Iterable.group_by([1, 2, 3], key=lambda x: "same")
         assert result == {"same": [1, 2, 3]}
 
 
@@ -106,27 +106,27 @@ class TestSlugify:
 
     def test_slugify_basic(self):
         """Test basic slugification."""
-        assert slugify("Hello World!") == "hello-world"
+        assert String.slug("Hello World!") == "hello-world"
 
     def test_slugify_special_chars(self):
         """Test slugification with special characters."""
-        assert slugify("Hello@World#Python!") == "helloworldpython"
+        assert String.slug("Hello@World#Python!") == "helloworldpython"
 
     def test_slugify_multiple_spaces(self):
         """Test slugification with multiple spaces."""
-        assert slugify("Hello    World") == "hello-world"
+        assert String.slug("Hello    World") == "hello-world"
 
     def test_slugify_leading_trailing_dashes(self):
         """Test slugification removes leading/trailing dashes."""
-        assert slugify("  Hello World  ") == "hello-world"
+        assert String.slug("  Hello World  ") == "hello-world"
 
     def test_slugify_empty(self):
         """Test slugification of empty string."""
-        assert slugify("") == ""
+        assert String.slug("") == ""
 
     def test_slugify_numbers(self):
         """Test slugification with numbers."""
-        assert slugify("Hello 123 World") == "hello-123-world"
+        assert String.slug("Hello 123 World") == "hello-123-world"
 
 
 class TestDebounce:
@@ -136,7 +136,7 @@ class TestDebounce:
         """Test that debounce delays execution."""
         call_count = 0
 
-        @debounce(delay=0.1)
+        @Decorators.debounce(delay=0.1)
         def test_func():
             nonlocal call_count
             call_count += 1
@@ -151,7 +151,7 @@ class TestDebounce:
         """Test that debounce cancels previous calls."""
         call_count = 0
 
-        @debounce(delay=0.1)
+        @Decorators.debounce(delay=0.1)
         def test_func():
             nonlocal call_count
             call_count += 1
@@ -169,7 +169,7 @@ class TestThrottle:
         """Test that throttle limits execution frequency."""
         call_count = 0
 
-        @throttle(delay=0.1)
+        @Decorators.throttle(delay=0.1)
         def test_func():
             nonlocal call_count
             call_count += 1
@@ -195,7 +195,7 @@ class TestRetry:
         """Test retry when function succeeds on first try."""
         call_count = 0
 
-        @retry(max_attempts=3)
+        @Decorators.retry(max_attempts=3)
         def test_func():
             nonlocal call_count
             call_count += 1
@@ -209,7 +209,7 @@ class TestRetry:
         """Test retry when function succeeds after failures."""
         call_count = 0
 
-        @retry(max_attempts=3, delay=0.01)
+        @Decorators.retry(max_attempts=3, delay=0.01)
         def test_func():
             nonlocal call_count
             call_count += 1
@@ -225,7 +225,7 @@ class TestRetry:
         """Test retry when all attempts fail."""
         call_count = 0
 
-        @retry(max_attempts=3, delay=0.01)
+        @Decorators.retry(max_attempts=3, delay=0.01)
         def test_func():
             nonlocal call_count
             call_count += 1
@@ -239,7 +239,7 @@ class TestRetry:
         """Test retry with specific exceptions."""
         call_count = 0
 
-        @retry(max_attempts=2, delay=0.01, exceptions=(ValueError,))
+        @Decorators.retry(max_attempts=2, delay=0.01, exceptions=(ValueError,))
         def test_func():
             nonlocal call_count
             call_count += 1
@@ -255,7 +255,7 @@ class TestRetry:
         """Test retry with exponential backoff."""
         call_times = []
 
-        @retry(max_attempts=3, delay=0.05, backoff=2.0)
+        @Decorators.retry(max_attempts=3, delay=0.05, backoff=2.0)
         def test_func():
             call_times.append(time.time())
             raise ValueError("Fail")
