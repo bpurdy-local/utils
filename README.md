@@ -19,7 +19,7 @@ pip install -e ".[dev]"
 
 ## Testing
 
-The project includes a comprehensive test suite with 200+ tests covering all utilities, edge cases, and error conditions.
+The project includes a comprehensive test suite with 390+ tests covering all utilities, edge cases, and error conditions.
 
 ```bash
 # Run all tests
@@ -396,6 +396,128 @@ Regex.groups(match)  # ("123", "456")
 Regex.is_valid(r"^\d+$")  # True
 ```
 
+### Logger Utilities
+
+The `Logger` class provides structured JSON logging with persistent context management:
+
+```python
+from utils import Logger
+
+# Three flexible input formats
+
+# 1. Simple string message
+Logger.info("User logged in")
+# {"timestamp": "2025-11-15T10:30:00.123456+00:00", "level": "INFO", "message": "User logged in"}
+
+# 2. Dictionary format
+Logger.info({"message": "User logged in", "user_id": 123, "ip": "192.168.1.1"})
+# {"timestamp": "2025-11-15T10:30:00.123456+00:00", "level": "INFO", "message": "User logged in", "user_id": 123, "ip": "192.168.1.1"}
+
+# 3. Keyword arguments
+Logger.info(message="User logged in", user_id=123, ip="192.168.1.1")
+# Same output as dictionary format
+
+# All log levels supported
+Logger.debug("Debug message")
+Logger.info("Info message")
+Logger.warning("Warning message")
+Logger.error("Error message")
+Logger.critical("Critical message")
+
+# Persistent context - automatically added to all subsequent logs
+Logger.bind("user_id", 123)
+Logger.bind("session_id", "abc-def-ghi")
+Logger.info("Action performed")
+# {"timestamp": "...", "level": "INFO", "user_id": 123, "session_id": "abc-def-ghi", "message": "Action performed"}
+
+# Bind multiple keys at once
+Logger.bind_multiple(user_id=123, session_id="abc-def-ghi", environment="production")
+
+# Automatic key normalization (camelCase, PascalCase, kebab-case → snake_case)
+Logger.bind("userId", 123)        # Normalized to "user_id"
+Logger.bind("SessionID", "abc")   # Normalized to "session_id"
+Logger.bind("api-key", "xyz")     # Normalized to "api_key"
+
+# Scoped context with context managers
+with Logger.context(request_id="req-123", endpoint="/api/users"):
+    Logger.info("Processing request")
+    # {"timestamp": "...", "level": "INFO", "request_id": "req-123", "endpoint": "/api/users", "message": "Processing request"}
+# Context automatically cleared after the with block
+
+# Nested context managers
+Logger.bind("user_id", 123)
+with Logger.context(request_id="req-123"):
+    with Logger.context(operation="update"):
+        Logger.info("Updating user")
+        # Includes: user_id, request_id, and operation
+    # operation removed, user_id and request_id remain
+# request_id removed, user_id remains
+
+# Get current context
+context = Logger.get_context()  # Returns copy of current context dict
+
+# Remove specific context keys
+Logger.unbind("user_id")
+
+# Clear all context
+Logger.clear_context()
+
+# Custom types are automatically handled (tuples, sets, datetime, custom objects)
+from datetime import datetime
+
+Logger.info(
+    message="Event occurred",
+    coordinates=(40.7128, -74.0060),  # Tuple → JSON array
+    tags={"python", "logging"},        # Set → JSON array
+    timestamp=datetime.now(),          # datetime → ISO string
+)
+
+# Custom objects with to_dict() method
+class User:
+    def to_dict(self):
+        return {"id": 123, "name": "Alice"}
+
+Logger.info(message="User created", user=User())
+# {"timestamp": "...", "level": "INFO", "message": "User created", "user": {"id": 123, "name": "Alice"}}
+
+# Search and parse log files
+results = Logger.search(
+    "app.log",
+    level="ERROR",                    # Filter by log level
+    start_time="2025-11-15T00:00:00", # Filter by time range
+    end_time="2025-11-15T23:59:59",
+    message_contains="database",      # Search message text
+    message_pattern=r"error \d+",     # Regex pattern matching
+    context={"user_id": 123},         # Filter by context values
+    has_keys=["user_id", "request_id"],  # Must have these keys
+    missing_keys=["error_code"]       # Must NOT have these keys
+)
+# Returns list of matching log entries as dicts
+
+# Find all logs that have a specific key
+user_logs = Logger.search("app.log", has_keys=["user_id"])
+
+# Find all logs missing a specific key
+anonymous_logs = Logger.search("app.log", missing_keys=["user_id"])
+
+# Combine filters: ERROR logs with user_id but no session_id
+filtered = Logger.search(
+    "app.log",
+    level="ERROR",
+    has_keys=["user_id"],
+    missing_keys=["session_id"]
+)
+
+# Thread-safe logging - each thread has isolated context
+import threading
+
+def worker():
+    Logger.bind("thread_id", threading.get_ident())
+    Logger.info("Worker started")  # Only includes this thread's context
+
+threading.Thread(target=worker).start()
+```
+
 ### Encoding Utilities
 
 Standalone encoding/decoding functions:
@@ -431,7 +553,7 @@ fanged = fang("hxxps://example[.]com")  # "https://example.com"
 
 ## Features
 
-- **Static Utility Classes**: Organized namespaces for String, Integer, Iterable, Dict, Datetime, Path, Regex, Random, FileIO, Decorators, and Validator
+- **Static Utility Classes**: Organized namespaces for String, Integer, Iterable, Dict, Datetime, Path, Regex, Random, FileIO, Decorators, Validator, and Logger
 - **String Utilities**: Truncation, case conversions, manipulation, validation, and extraction
 - **Integer Utilities**: Properties, clamping, conversions, math operations, and digit manipulation
 - **Iterable Utilities**: Chunking, flattening, filtering, grouping, partitioning, and aggregations
@@ -442,6 +564,7 @@ fanged = fang("hxxps://example[.]com")  # "https://example.com"
 - **Validator Utilities**: Email, URL, phone, UUID, credit card, hex color, IPv4, and more
 - **Decorator Utilities**: Debounce, throttle, retry, memoize, and once
 - **Regex Utilities**: Pattern matching, searching, replacing, splitting, and validation
+- **Logger Utilities**: Structured JSON logging, persistent context, key normalization, custom type handling, and log searching
 - **Encoding Utilities**: Base64, URL, HTML encoding/decoding, and fang/defang
 - **Type Hints**: Full type annotations for better IDE support
 - **Zero Dependencies**: No external runtime dependencies required

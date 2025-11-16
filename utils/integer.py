@@ -38,18 +38,19 @@ class Integer:
         """
         if not 0 < n < 4000:
             raise ValueError("Integer must be between 1 and 3999")
-        # Subtractive notation pairs (e.g., 900=CM, 400=CD, 90=XC, etc.)
-        val = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
-        syb = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"]
-        roman_num = ""
-        i = 0
-        num = n
-        while num > 0:
-            for _ in range(num // val[i]):
-                roman_num += syb[i]
-                num -= val[i]
-            i += 1
-        return roman_num
+
+        # Subtractive notation pairs in descending order
+        ROMAN_NUMERALS = (
+            (1000, "M"), (900, "CM"), (500, "D"), (400, "CD"),
+            (100, "C"), (90, "XC"), (50, "L"), (40, "XL"),
+            (10, "X"), (9, "IX"), (5, "V"), (4, "IV"), (1, "I"),
+        )
+
+        result = ""
+        for value, symbol in ROMAN_NUMERALS:
+            count, n = divmod(n, value)
+            result += symbol * count
+        return result
 
     @staticmethod
     def to_words(n: int) -> str:

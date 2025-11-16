@@ -52,6 +52,39 @@ class TestStringCaseConversions:
     def test_snake_case_with_numbers(self):
         assert String.snake_case("Hello World 123") == "hello_world_123"
 
+    def test_snake_case_camel_case(self):
+        assert String.snake_case("helloWorld") == "hello_world"
+        assert String.snake_case("myVariableName") == "my_variable_name"
+
+    def test_snake_case_pascal_case(self):
+        assert String.snake_case("HelloWorld") == "hello_world"
+        assert String.snake_case("MyClassName") == "my_class_name"
+
+    def test_snake_case_consecutive_capitals(self):
+        assert String.snake_case("HTTPServer") == "http_server"
+        assert String.snake_case("XMLParser") == "xml_parser"
+        assert String.snake_case("HTMLElement") == "html_element"
+        assert String.snake_case("URLPath") == "url_path"
+
+    def test_snake_case_kebab_case(self):
+        assert String.snake_case("kebab-case-string") == "kebab_case_string"
+        assert String.snake_case("my-variable-name") == "my_variable_name"
+
+    def test_snake_case_mixed_delimiters(self):
+        assert String.snake_case("hello-world from_Python") == "hello_world_from_python"
+        assert String.snake_case("API-Key_Value") == "api_key_value"
+
+    def test_snake_case_special_chars(self):
+        assert String.snake_case("hello@world#test") == "hello_world_test"
+        assert String.snake_case("user.name") == "user_name"
+
+    def test_snake_case_already_snake_case(self):
+        assert String.snake_case("already_snake_case") == "already_snake_case"
+        assert String.snake_case("hello_world") == "hello_world"
+
+    def test_snake_case_with_trailing_spaces(self):
+        assert String.snake_case("  hello world  ") == "hello_world"
+
     def test_kebab_case_basic(self):
         assert String.kebab_case("Hello World") == "hello-world"
 

@@ -6,8 +6,12 @@ from typing import Any
 
 
 class Decorators:
+    """Static utility class for function decorators."""
+
     @staticmethod
     def debounce(*, delay: float) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Delay function execution until after delay seconds of inactivity."""
+
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             timer: threading.Timer | None = None
 
@@ -25,6 +29,8 @@ class Decorators:
 
     @staticmethod
     def throttle(*, delay: float) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Limit function execution to once per delay seconds."""
+
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             last_called: float | None = None
 
@@ -49,6 +55,8 @@ class Decorators:
         backoff: float = 2.0,
         exceptions: tuple[type[Exception], ...] = (Exception,),
     ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+        """Retry function on exception with exponential backoff."""
+
         def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             @functools.wraps(func)
             def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -61,7 +69,7 @@ class Decorators:
                         last_exception = e
                         if attempt < max_attempts - 1:
                             time.sleep(current_delay)
-                            current_delay *= backoff
+                            current_delay *= backoff  # Exponential backoff
                         else:
                             raise
                 if last_exception:
@@ -74,6 +82,7 @@ class Decorators:
 
     @staticmethod
     def memoize(func: Callable[..., Any]) -> Callable[..., Any]:
+        """Cache function results based on arguments."""
         cache: dict[tuple[Any, ...], Any] = {}
 
         @functools.wraps(func)
@@ -87,6 +96,7 @@ class Decorators:
 
     @staticmethod
     def once(func: Callable[..., Any]) -> Callable[..., Any]:
+        """Ensure function is called only once, caching the result."""
         called = False
         result = None
 

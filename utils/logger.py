@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from utils.json_encoder import JsonEncoder
+from utils.string import String
 
 
 class Logger:
@@ -24,14 +25,8 @@ class Logger:
 
     @classmethod
     def _normalize_key(cls, key: str) -> str:
-        # Convert keys to snake_case for consistent log field names
-        # Handles: camelCase, PascalCase, kebab-case, spaces, consecutive caps
-        key = re.sub(r"([a-z])([A-Z])", r"\1_\2", key)  # camelCase -> camel_Case
-        key = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", key)  # HTTPServer -> HTTP_Server
-        key = key.replace("-", "_").replace(" ", "_")  # kebab/spaces to underscores
-        key = re.sub(r"_+", "_", key)  # Consolidate multiple underscores
-        key = key.strip("_").lower()  # Trim and lowercase
-        return key
+        """Convert keys to snake_case for consistent log field names."""
+        return String.snake_case(key)
 
     @classmethod
     def _ensure_configured(cls):

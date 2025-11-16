@@ -71,18 +71,31 @@ class String:
     def snake_case(text: str) -> str:
         """Convert string to snake_case format.
 
+        Handles camelCase, PascalCase, kebab-case, spaces, and consecutive capitals.
+
         Examples:
             >>> String.snake_case("Hello World")
             'hello_world'
             >>> String.snake_case("helloWorld")
             'hello_world'
+            >>> String.snake_case("HTTPServer")
+            'http_server'
+            >>> String.snake_case("kebab-case-string")
+            'kebab_case_string'
         """
         s = text.strip()
-        s = re.sub(r"[^\w]+", "_", s)  # Replace non-word chars with underscores
-        s = re.sub(r"(?<=[a-z0-9])([A-Z])", r"_\1", s)  # Insert underscore before capitals
-        s = s.lower()
-        s = re.sub(r"_+", "_", s).strip("_")  # Consolidate multiple underscores
-        return s
+        # Handle camelCase: insert underscore before capitals following lowercase
+        s = re.sub(r"([a-z])([A-Z])", r"\1_\2", s)
+        # Handle consecutive capitals: HTTPServer -> HTTP_Server
+        s = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", s)
+        # Replace hyphens and spaces with underscores
+        s = s.replace("-", "_").replace(" ", "_")
+        # Replace any remaining non-word characters with underscores
+        s = re.sub(r"[^\w]+", "_", s)
+        # Consolidate multiple underscores and trim
+        s = re.sub(r"_+", "_", s).strip("_")
+        # Convert to lowercase
+        return s.lower()
 
     @staticmethod
     def kebab_case(text: str) -> str:
