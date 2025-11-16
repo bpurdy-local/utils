@@ -4,10 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Python utility library that provides static utility classes for common operations on built-in Python types. The library follows a functional approach with organized namespaces:
+This is a Python utility library that provides static utility classes for common operations on built-in Python types. The library follows a functional approach with organized namespaces using pure static methods.
 
-1. **Static Utility Classes**: Type-safe utility classes (`String`, `Integer`, `Iterable`, `Datetime`, `Dict`, `Path`, `Regex`, `Random`, `FileIO`, `Decorators`, `Validator`) that provide static methods for working with their respective types
-2. **Standalone Functions**: Backward-compatible functions for common operations
+**Available Utility Classes:**
+- **String**, **Integer**, **Iterable**, **Datetime**, **Dict** - Core type utilities
+- **Path**, **FileIO** - Filesystem operations
+- **Regex**, **Validator** - Pattern matching and validation
+- **Random** - Random generation utilities
+- **Decorators** - Function decorators (debounce, throttle, retry, memoize, once)
+- **Logger** - Structured JSON logging with persistent context
+- **Encode**, **Decode** - Encoding/decoding operations (base64, URL, HTML, fang/defang)
 
 All utility classes use static methods that accept the value to operate on as the first positional parameter, followed by keyword-only arguments (enforced with the `*` separator). This design provides clear, consistent APIs without the overhead of instantiation or inheritance.
 
@@ -57,7 +63,7 @@ pytest -m "not slow"
 pytest -v
 ```
 
-The test suite has 200+ tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
+The test suite has 419 tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
 
 ## Code Quality
 
@@ -96,24 +102,30 @@ pre-commit install
 
 Each utility class lives in its own module under `utils/`:
 
-- `string.py` - String utility class with text manipulation methods
-- `integer.py` - Integer utility class with number utilities
-- `iterable.py` - Iterable utility class with collection operations
-- `datetime.py` - Datetime utility class with date/time utilities
-- `dict.py` - Dict utility class with dictionary operations
-- `path.py` - Path utility class for filesystem operations
-- `regex.py` - Regex utility class for pattern matching
-- `random_utils.py` - Random number/selection utilities
-- `file_io.py` - File I/O operations
-- `decorators.py` - Function decorators
-- `validator.py` - Validation utility class
+**Core Type Utilities:**
+- `string.py` - String utility class (21 methods: truncate, case conversions, validation, extraction, etc.)
+- `integer.py` - Integer utility class (15 methods: properties, clamping, conversions, math operations)
+- `iterable.py` - Iterable utility class (19 methods: chunk, flatten, unique, group_by, partition, aggregations)
+- `datetime.py` - Datetime utility class (28 methods: parsing, formatting, boundaries, arithmetic)
+- `dict.py` - Dict utility class (15 methods: pick/omit, deep get/set, merge, transformations)
 
-Standalone utility modules:
-- `common.py` - Common functions (chunk, flatten, debounce, throttle, retry, slugify)
-- `collections.py` - Collection utilities (unique, first/last, pluck, pick/omit, partition)
-- `misc.py` - Miscellaneous utilities (clamp, memoize, once, generate_id, hash_string, bytes_to_human)
-- `validation.py` - Validation functions (is_email, is_url, is_phone, etc.)
-- `encoding.py` - Encoding/decoding utilities (base64, URL, HTML, fang/defang)
+**Filesystem & I/O:**
+- `path.py` - Path utility class (11 methods: read/write files, JSON operations, file management)
+- `file_io.py` - FileIO utility class (delegates to Path for backward compatibility)
+
+**Pattern Matching & Validation:**
+- `regex.py` - Regex utility class (8 methods: match, search, replace, split, validation)
+- `validator.py` - Validator utility class (10 methods: email, URL, phone, credit card, UUID, etc.)
+
+**Utilities:**
+- `random_utils.py` - Random utility class (9 methods: string/number generation, choices, UUIDs)
+- `decorators.py` - Decorators utility class (5 methods: debounce, throttle, retry, memoize, once)
+
+**Logging & Encoding:**
+- `logger.py` - Logger utility class with structured JSON logging and persistent context
+- `encode.py` - Encode utility class (4 methods: base64, URL, HTML, defang)
+- `decode.py` - Decode utility class (4 methods: base64, URL, HTML, fang)
+- `json_encoder.py` - JsonEncoder class for custom JSON serialization (used by Logger)
 
 ### Static Utility Class Pattern
 
