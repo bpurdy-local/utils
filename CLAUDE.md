@@ -63,7 +63,7 @@ pytest -m "not slow"
 pytest -v
 ```
 
-The test suite has 419 tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
+The test suite has 481 tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
 
 ## Code Quality
 
@@ -105,17 +105,17 @@ Each utility class lives in its own module under `utils/`:
 **Core Type Utilities:**
 - `string.py` - String utility class (21 methods: truncate, case conversions, validation, extraction, etc.)
 - `integer.py` - Integer utility class (15 methods: properties, clamping, conversions, math operations)
-- `iterable.py` - Iterable utility class (19 methods: chunk, flatten, unique, group_by, partition, aggregations)
+- `iterable.py` - Iterable utility class (22 methods: chunk, flatten, unique, group_by, partition, aggregations, find_first/last/all)
 - `datetime.py` - Datetime utility class (28 methods: parsing, formatting, boundaries, arithmetic)
-- `dict.py` - Dict utility class (15 methods: pick/omit, deep get/set, merge, transformations)
+- `dict.py` - Dict utility class (18 methods: pick/omit, deep get/set, merge, transformations, keys_to_camel/snake)
 
 **Filesystem & I/O:**
-- `path.py` - Path utility class (11 methods: read/write files, JSON operations, file management)
+- `path.py` - Path utility class (12 methods: read/write files, JSON operations, file management, exists)
 - `file_io.py` - FileIO utility class (delegates to Path for backward compatibility)
 
 **Pattern Matching & Validation:**
 - `regex.py` - Regex utility class (8 methods: match, search, replace, split, validation)
-- `validator.py` - Validator utility class (10 methods: email, URL, phone, credit card, UUID, etc.)
+- `validator.py` - Validator utility class (14 methods: email, URL, phone, credit card, UUID, geographic validators)
 
 **Utilities:**
 - `random_utils.py` - Random utility class (9 methods: string/number generation, choices, UUIDs)

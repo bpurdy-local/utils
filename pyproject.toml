@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "utils"
 version = "0.1.0"
@@ -32,6 +36,18 @@ indent-style = "space"
 [tool.pyright]
 typeCheckingMode = "standard"
 reportMissingTypeStubs = false
+
+[tool.hatch.build.targets.wheel]
+packages = ["utils"]
+
+[tool.hatch.build]
+exclude = [
+    "features/",
+    ".vscode/",
+    ".pytest_cache/",
+    ".ruff_cache/",
+    "*.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

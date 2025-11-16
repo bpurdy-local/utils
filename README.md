@@ -5,7 +5,7 @@ A Python utility library providing static utility classes for common operations 
 ## Installation
 
 ```bash
-# Using uv
+# Using uv (recommended)
 uv pip install -e .
 
 # Or using pip
@@ -16,6 +16,20 @@ uv pip install -e ".[dev]"
 # or
 pip install -e ".[dev]"
 ```
+
+### Verify Installation
+
+After installing, verify the package is correctly configured:
+
+```bash
+# Quick verification
+python -c "from utils import String, Integer, Dict, Path, Logger; print('✓ Installation successful!')"
+
+# Or run the import tests
+pytest tests/test_imports.py -v
+```
+
+This confirms that the `utils` package is properly installed and all utility classes can be imported.
 
 ## Testing
 
@@ -168,6 +182,12 @@ Iterable.sort_by([{"age": 30}, {"age": 25}], key="age")  # [{"age": 25}, {"age":
 # Slicing
 Iterable.take([1, 2, 3, 4, 5], n=3)  # [1, 2, 3]
 Iterable.drop([1, 2, 3, 4, 5], n=2)  # [3, 4, 5]
+
+# Finding items
+users = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}, {"name": "Charlie", "age": 30}]
+Iterable.find_first(users, predicate=lambda u: u["age"] == 30)  # {"name": "Alice", "age": 30}
+Iterable.find_last(users, predicate=lambda u: u["age"] == 30)  # {"name": "Charlie", "age": 30}
+Iterable.find_all(users, predicate=lambda u: u["age"] == 30)  # [{"name": "Alice", ...}, {"name": "Charlie", ...}]
 ```
 
 ### Datetime Utilities
@@ -250,9 +270,16 @@ Dict.merge(d1, d2, deep=True)  # Deep merge nested dicts
 # Transformations
 d = {"a": 1, "b": 2, "c": 3}
 Dict.map_values(d, func=lambda x: x * 2)  # {'a': 2, 'b': 4, 'c': 6}
-Dict.map_keys(d, func=str.upper)  # {'A': 1, 'B': 2, 'C': 3}
+Dict.map_keys(d, func=str.upper)  # {'A': 1, 'B': 2, 'C': 3} useful in combination with the String class
 Dict.filter(d, predicate=lambda k, v: v > 1)  # {'b': 2, 'c': 3}
 Dict.invert(d)  # {1: 'a', 2: 'b', 3: 'c'}
+
+# Key case transformations
+d = {"first_name": "Alice", "last_name": "Smith", "user_data": {"home_address": "123 Main St"}}
+Dict.keys_to_camel(d)  # {'firstName': 'Alice', 'lastName': 'Smith', 'userData': {...}}
+Dict.keys_to_camel(d, capitalize_first=True)  # {'FirstName': 'Alice', 'LastName': 'Smith', ...}
+Dict.keys_to_camel(d, recursive=True)  # Transforms all nested dict keys
+Dict.keys_to_snake({"firstName": "Alice", "lastName": "Smith"})  # {'first_name': 'Alice', 'last_name': 'Smith'}
 
 # Flattening
 d = {"a": {"b": {"c": 1}}}
@@ -287,8 +314,9 @@ Path.write_json("./data/file.json", data=data)
 content = Path.read_json("./data/file.json")  # {"name": "Alice", "age": 30}
 
 # Path properties
-Path.extension("./data/file.txt")  # "txt"
+Path.extension("./data/file.txt")  # ".txt"
 Path.get_stem("./data/file.txt")  # "file"
+Path.exists("./data/file.txt")  # True if file or directory exists
 
 # File management
 Path.ensure_dir("./data/subdir")  # Create directory if it doesn't exist
@@ -362,6 +390,17 @@ Validator.empty(None)  # True
 # Numeric validation
 Validator.numeric("123.45")  # True
 Validator.integer("123")  # True
+
+# Geographic validation
+Validator.is_latitude(40.7128)  # True (New York)
+Validator.is_latitude(91)  # False (out of range)
+Validator.is_latitude(-90, strict=False)  # True (includes boundary)
+Validator.is_longitude(-74.0060)  # True
+Validator.is_longitude(181)  # False (out of range)
+Validator.is_timezone("America/New_York")  # True
+Validator.is_timezone("UTC")  # True
+Validator.is_timezone("Invalid/Zone")  # False
+Validator.is_coordinates(40.7128, -74.0060)  # True (valid lat/lon pair)
 ```
 
 ### Decorator Utilities
@@ -583,12 +622,12 @@ fanged_ip = Decode.fang("192[.]168[.]1[.]1")  # "192.168.1.1"
 - **14 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Decorators, Logger, Encode, Decode
 - **String Utilities** (21 methods): Truncation, case conversions, slug generation, padding, validation, email/URL extraction, hashing
 - **Integer Utilities** (15 methods): Properties (even/odd/prime), clamping, conversions (roman/words), math operations, byte formatting, percentages
-- **Iterable Utilities** (19 methods): Chunking, flattening, filtering, grouping, partitioning, aggregations, sorting
-- **Dict Utilities** (15 methods): Pick/omit keys, deep get/set, merging, transformations, flattening/unflattening
+- **Iterable Utilities** (22 methods): Chunking, flattening, filtering, grouping, partitioning, aggregations, sorting, finding items
+- **Dict Utilities** (18 methods): Pick/omit keys, deep get/set, merging, transformations, key case conversions, flattening/unflattening
 - **Datetime Utilities** (28 methods): Parsing, formatting, relative time, day/week/month/year boundaries, date arithmetic
-- **Path Utilities** (11 methods): File I/O for text/lines/JSON, file management (copy/move/delete), path operations
+- **Path Utilities** (12 methods): File I/O for text/lines/JSON, file management (copy/move/delete), path operations, existence checks
 - **Random Utilities** (9 methods): String/number generation, choices, shuffling, UUIDs
-- **Validator Utilities** (10 methods): Email, URL, phone, UUID, credit card, hex color, IPv4, empty/numeric checks
+- **Validator Utilities** (14 methods): Email, URL, phone, UUID, credit card, hex color, IPv4, empty/numeric checks, geographic validation
 - **Decorator Utilities** (5 methods): Debounce, throttle, retry with backoff, memoize, once
 - **Regex Utilities** (8 methods): Pattern matching, searching, replacing, splitting, group extraction, validation
 - **Logger Utilities**: Structured JSON logging with thread-local context, key normalization, log searching, custom type handling
@@ -596,5 +635,5 @@ fanged_ip = Decode.fang("192[.]168[.]1[.]1")  # "192.168.1.1"
 - **Keyword-Only Arguments**: All parameters (except first) are keyword-only for clarity and safety
 - **Type Hints**: Complete type annotations for all methods
 - **Zero Dependencies**: No external runtime dependencies required (optional: arrow for enhanced datetime parsing)
-- **Comprehensive Tests**: 419 tests covering all utilities, edge cases, and error conditions
+- **Comprehensive Tests**: 481 tests covering all utilities, edge cases, and error conditions
 
