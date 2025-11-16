@@ -10,7 +10,12 @@ class Iterable:
 
     @staticmethod
     def chunk(items: list[T], *, size: int) -> list[list[T]]:
-        """Split iterable into chunks of specified size."""
+        """Split iterable into chunks of specified size.
+
+        Examples:
+            >>> Iterable.chunk([1, 2, 3, 4, 5], size=2)
+            [[1, 2], [3, 4], [5]]
+        """
         result = []
         current_chunk = []
         for item in items:
@@ -24,7 +29,12 @@ class Iterable:
 
     @staticmethod
     def flatten(items: list[T]) -> list[T]:
-        """Flatten nested lists and tuples into a single list."""
+        """Flatten nested lists and tuples into a single list.
+
+        Examples:
+            >>> Iterable.flatten([1, [2, 3], 4, [5, 6]])
+            [1, 2, 3, 4, 5, 6]
+        """
         result = []
         for item in items:
             if isinstance(item, list | tuple):
@@ -35,11 +45,16 @@ class Iterable:
 
     @staticmethod
     def unique(items: list[T], *, key: Callable[[T], Any] | None = None) -> list[T]:
-        """Get unique items from list, preserving order."""
+        """Get unique items from list, preserving order.
+
+        Examples:
+            >>> Iterable.unique([1, 2, 2, 3, 1, 4])
+            [1, 2, 3, 4]
+        """
         seen = set()
         result = []
         for item in items:
-            k = key(item) if key else item
+            k = key(item) if key else item  # Use key function to determine uniqueness
             if k not in seen:
                 seen.add(k)
                 result.append(item)
@@ -61,7 +76,12 @@ class Iterable:
 
     @staticmethod
     def group_by(items: list[T], *, key: Callable[[T], K]) -> dict[K, list[T]]:
-        """Group items by key function."""
+        """Group items by key function.
+
+        Examples:
+            >>> Iterable.group_by([1, 2, 3, 4, 5], key=lambda x: x % 2)
+            {1: [1, 3, 5], 0: [2, 4]}
+        """
         result: dict[K, list[T]] = {}
         for item in items:
             k = key(item)
@@ -72,7 +92,12 @@ class Iterable:
 
     @staticmethod
     def partition(items: list[T], *, predicate: Callable[[T], bool]) -> tuple[list[T], list[T]]:
-        """Partition items into two lists based on predicate."""
+        """Partition items into two lists based on predicate.
+
+        Examples:
+            >>> Iterable.partition([1, 2, 3, 4, 5], predicate=lambda x: x % 2 == 0)
+            ([2, 4], [1, 3, 5])
+        """
         true_list = []
         false_list = []
         for item in items:
@@ -84,7 +109,13 @@ class Iterable:
 
     @staticmethod
     def pluck(items: list[T], *, key: str) -> list[Any]:
-        """Extract values from list of dicts by key."""
+        """Extract values from list of dicts by key.
+
+        Examples:
+            >>> items = [{'name': 'Alice', 'age': 30}, {'name': 'Bob', 'age': 25}]
+            >>> Iterable.pluck(items, key='name')
+            ['Alice', 'Bob']
+        """
         result = []
         for item in items:
             if isinstance(item, dict) and key in item:
@@ -108,7 +139,12 @@ class Iterable:
 
     @staticmethod
     def count_by(items: list[T], *, key: Callable[[T], K] | None = None) -> dict[K, int]:
-        """Count occurrences of items, optionally grouped by key function."""
+        """Count occurrences of items, optionally grouped by key function.
+
+        Examples:
+            >>> Iterable.count_by(['a', 'b', 'a', 'c', 'b', 'a'])
+            {'a': 3, 'b': 2, 'c': 1}
+        """
         result: dict[K, int] = {}
         for item in items:
             k = key(item) if key else item  # type: ignore

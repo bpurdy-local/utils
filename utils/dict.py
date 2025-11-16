@@ -3,16 +3,39 @@ from typing import Any
 
 
 class Dict:
+    """Static utility class for dictionary operations."""
+
     @staticmethod
     def pick(d: dict[str, Any], *keys: str) -> dict[str, Any]:
+        """Include only specified keys from dictionary.
+
+        Examples:
+            >>> Dict.pick({'a': 1, 'b': 2, 'c': 3}, 'a', 'c')
+            {'a': 1, 'c': 3}
+        """
+        # Include only specified keys
         return {k: v for k, v in d.items() if k in keys}
 
     @staticmethod
     def omit(d: dict[str, Any], *keys: str) -> dict[str, Any]:
+        """Exclude specified keys from dictionary.
+
+        Examples:
+            >>> Dict.omit({'a': 1, 'b': 2, 'c': 3}, 'b')
+            {'a': 1, 'c': 3}
+        """
+        # Exclude specified keys
         return {k: v for k, v in d.items() if k not in keys}
 
     @staticmethod
     def deep_get(d: dict[str, Any], *, path: str, default: Any = None) -> Any:
+        """Get value from nested dictionary using dot-separated path.
+
+        Examples:
+            >>> Dict.deep_get({'a': {'b': {'c': 42}}}, path='a.b.c')
+            42
+        """
+        # Traverse nested dicts using dot-separated path (e.g., "a.b.c")
         keys = path.split(".")
         current = d
         for key in keys:
@@ -24,6 +47,8 @@ class Dict:
 
     @staticmethod
     def deep_set(d: dict[str, Any], *, path: str, value: Any) -> None:
+        """Set value in nested dictionary using dot-separated path."""
+        # Create nested dicts as needed along the path
         keys = path.split(".")
         current = d
         for key in keys[:-1]:
@@ -34,9 +59,11 @@ class Dict:
 
     @staticmethod
     def merge(d: dict[str, Any], *, other: dict[str, Any], deep: bool = False) -> dict[str, Any]:
+        """Merge two dictionaries, optionally performing deep merge."""
         if not deep:
             return {**d, **other}
 
+        # Recursively merge nested dicts when both values are dicts
         result = d.copy()
         for key, value in other.items():
             if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -47,22 +74,42 @@ class Dict:
 
     @staticmethod
     def invert(d: dict[str, Any]) -> dict[str, Any]:
+        """Swap keys and values in dictionary.
+
+        Examples:
+            >>> Dict.invert({'a': 1, 'b': 2})
+            {1: 'a', 2: 'b'}
+        """
+        # Swap keys and values (e.g., {"a": 1} -> {1: "a"})
         return {v: k for k, v in d.items()}
 
     @staticmethod
     def map_values(d: dict[str, Any], *, func: Callable[[Any], Any]) -> dict[str, Any]:
+        """Transform all values in dictionary using function.
+
+        Examples:
+            >>> Dict.map_values({'a': 1, 'b': 2}, func=lambda x: x * 2)
+            {'a': 2, 'b': 4}
+        """
+        # Transform all values using function
         return {k: func(v) for k, v in d.items()}
 
     @staticmethod
     def map_keys(d: dict[str, Any], *, func: Callable[[str], str]) -> dict[str, Any]:
+        """Transform all keys in dictionary using function."""
+        # Transform all keys using function
         return {func(k): v for k, v in d.items()}
 
     @staticmethod
     def filter(d: dict[str, Any], *, predicate: Callable[[str, Any], bool]) -> dict[str, Any]:
+        """Filter dictionary keeping only entries matching predicate."""
+        # Keep only key-value pairs that match predicate
         return {k: v for k, v in d.items() if predicate(k, v)}
 
     @staticmethod
     def defaults(d: dict[str, Any], *, defaults: dict[str, Any]) -> dict[str, Any]:
+        """Add default values for missing keys in dictionary."""
+        # Add default values for missing keys
         result = d.copy()
         for key, value in defaults.items():
             if key not in result:
@@ -71,10 +118,20 @@ class Dict:
 
     @staticmethod
     def compact(d: dict[str, Any]) -> dict[str, Any]:
+        """Remove all None values from dictionary."""
+        # Remove all None values
         return {k: v for k, v in d.items() if v is not None}
 
     @staticmethod
     def flatten(d: dict[str, Any], *, separator: str = ".") -> dict[str, Any]:
+        """Flatten nested dictionary into single-level with compound keys.
+
+        Examples:
+            >>> Dict.flatten({'a': {'b': {'c': 1}}})
+            {'a.b.c': 1}
+        """
+
+        # Convert nested dicts to flat dict with compound keys (e.g., {"a": {"b": 1}} -> {"a.b": 1})
         def _flatten(obj: Any, parent_key: str = "") -> dict[str, Any]:
             items = []
             for k, v in obj.items():
@@ -89,6 +146,13 @@ class Dict:
 
     @staticmethod
     def unflatten(d: dict[str, Any], *, separator: str = ".") -> dict[str, Any]:
+        """Reconstruct nested dictionary from flattened compound keys.
+
+        Examples:
+            >>> Dict.unflatten({'a.b.c': 1})
+            {'a': {'b': {'c': 1}}}
+        """
+        # Reconstruct nested dicts from flat keys (e.g., {"a.b": 1} -> {"a": {"b": 1}})
         result: dict[str, Any] = {}
         for key, value in d.items():
             keys = key.split(separator)

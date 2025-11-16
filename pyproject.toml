@@ -22,6 +22,9 @@ line-length = 100
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 ignore = ["RUF022"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E501"]  # Allow long lines in test files
+
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"

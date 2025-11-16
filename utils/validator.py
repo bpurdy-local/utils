@@ -7,13 +7,27 @@ class Validator:
 
     @staticmethod
     def email(value: str) -> bool:
-        """Validate email address format."""
+        """Validate email address format.
+
+        Examples:
+            >>> Validator.email("test@example.com")
+            True
+            >>> Validator.email("invalid-email")
+            False
+        """
         pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
         return bool(re.match(pattern, value))
 
     @staticmethod
     def url(value: str) -> bool:
-        """Validate URL format."""
+        """Validate URL format.
+
+        Examples:
+            >>> Validator.url("https://example.com")
+            True
+            >>> Validator.url("not a url")
+            False
+        """
         pattern = r"^https?://[^\s/$.?#].[^\s]*$"
         return bool(re.match(pattern, value))
 
@@ -30,35 +44,59 @@ class Validator:
         if not digits or len(digits) < 13:
             return False
 
+        # Luhn algorithm: double every other digit from right, sum all digits
         def luhn_check(card_number: str) -> bool:
             def digits_of(n: str) -> list[int]:
                 return [int(d) for d in n]
 
             digits = digits_of(card_number)
-            odd_digits = digits[-1::-2]
-            even_digits = digits[-2::-2]
+            odd_digits = digits[-1::-2]  # Every other digit starting from right
+            even_digits = digits[-2::-2]  # Remaining digits
             checksum = sum(odd_digits)
             for d in even_digits:
-                checksum += sum(digits_of(str(d * 2)))
+                checksum += sum(digits_of(str(d * 2)))  # Double and sum digits
             return checksum % 10 == 0
 
         return luhn_check(digits)
 
     @staticmethod
     def uuid(value: str) -> bool:
-        """Validate UUID format."""
+        """Validate UUID format.
+
+        Examples:
+            >>> Validator.uuid("550e8400-e29b-41d4-a716-446655440000")
+            True
+            >>> Validator.uuid("invalid-uuid")
+            False
+        """
         pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
         return bool(re.match(pattern, value, re.IGNORECASE))
 
     @staticmethod
     def hex_color(value: str) -> bool:
-        """Validate hex color code format."""
+        """Validate hex color code format.
+
+        Examples:
+            >>> Validator.hex_color("#ff0000")
+            True
+            >>> Validator.hex_color("#f00")
+            True
+            >>> Validator.hex_color("red")
+            False
+        """
         pattern = r"^#([0-9a-f]{3}|[0-9a-f]{6})$"
         return bool(re.match(pattern, value, re.IGNORECASE))
 
     @staticmethod
     def ipv4(value: str) -> bool:
-        """Validate IPv4 address format."""
+        """Validate IPv4 address format.
+
+        Examples:
+            >>> Validator.ipv4("192.168.1.1")
+            True
+            >>> Validator.ipv4("256.1.1.1")
+            False
+        """
         parts = value.split(".")
         if len(parts) != 4:
             return False
