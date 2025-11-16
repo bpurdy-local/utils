@@ -207,3 +207,163 @@ class TestIsInteger:
         assert Validator.integer("abc") is False
         assert Validator.integer("") is False
         assert Validator.integer("12a") is False
+
+
+class TestIsLatitude:
+    """Test is_latitude function."""
+
+    def test_is_latitude_valid_strict(self):
+        """Test valid latitudes with strict mode (default)."""
+        assert Validator.is_latitude(0) is True
+        assert Validator.is_latitude(45.5) is True
+        assert Validator.is_latitude(-45.5) is True
+        assert Validator.is_latitude(89.9) is True
+        assert Validator.is_latitude(-89.9) is True
+
+    def test_is_latitude_boundary_strict(self):
+        """Test boundary values with strict mode."""
+        assert Validator.is_latitude(90) is False
+        assert Validator.is_latitude(-90) is False
+        assert Validator.is_latitude(89.9999) is True
+        assert Validator.is_latitude(-89.9999) is True
+
+    def test_is_latitude_valid_non_strict(self):
+        """Test valid latitudes with non-strict mode."""
+        assert Validator.is_latitude(90, strict=False) is True
+        assert Validator.is_latitude(-90, strict=False) is True
+        assert Validator.is_latitude(0, strict=False) is True
+        assert Validator.is_latitude(45.5, strict=False) is True
+
+    def test_is_latitude_invalid(self):
+        """Test invalid latitudes."""
+        assert Validator.is_latitude(91) is False
+        assert Validator.is_latitude(-91) is False
+        assert Validator.is_latitude(180) is False
+        assert Validator.is_latitude(-180) is False
+        assert Validator.is_latitude(91, strict=False) is False
+        assert Validator.is_latitude(-91, strict=False) is False
+
+    def test_is_latitude_string_input(self):
+        """Test latitude with string input."""
+        assert Validator.is_latitude("45.5") is True
+        assert Validator.is_latitude("-45.5") is True
+        assert Validator.is_latitude("0") is True
+        assert Validator.is_latitude("90", strict=False) is True
+        assert Validator.is_latitude("90") is False
+        assert Validator.is_latitude("invalid") is False
+        assert Validator.is_latitude("") is False
+
+
+class TestIsLongitude:
+    """Test is_longitude function."""
+
+    def test_is_longitude_valid_strict(self):
+        """Test valid longitudes with strict mode (default)."""
+        assert Validator.is_longitude(0) is True
+        assert Validator.is_longitude(-122.4) is True
+        assert Validator.is_longitude(122.4) is True
+        assert Validator.is_longitude(179.9) is True
+        assert Validator.is_longitude(-179.9) is True
+
+    def test_is_longitude_boundary_strict(self):
+        """Test boundary values with strict mode."""
+        assert Validator.is_longitude(180) is False
+        assert Validator.is_longitude(-180) is False
+        assert Validator.is_longitude(179.9999) is True
+        assert Validator.is_longitude(-179.9999) is True
+
+    def test_is_longitude_valid_non_strict(self):
+        """Test valid longitudes with non-strict mode."""
+        assert Validator.is_longitude(180, strict=False) is True
+        assert Validator.is_longitude(-180, strict=False) is True
+        assert Validator.is_longitude(0, strict=False) is True
+        assert Validator.is_longitude(-122.4, strict=False) is True
+
+    def test_is_longitude_invalid(self):
+        """Test invalid longitudes."""
+        assert Validator.is_longitude(181) is False
+        assert Validator.is_longitude(-181) is False
+        assert Validator.is_longitude(360) is False
+        assert Validator.is_longitude(-360) is False
+        assert Validator.is_longitude(181, strict=False) is False
+        assert Validator.is_longitude(-181, strict=False) is False
+
+    def test_is_longitude_string_input(self):
+        """Test longitude with string input."""
+        assert Validator.is_longitude("-122.4") is True
+        assert Validator.is_longitude("122.4") is True
+        assert Validator.is_longitude("0") is True
+        assert Validator.is_longitude("180", strict=False) is True
+        assert Validator.is_longitude("180") is False
+        assert Validator.is_longitude("invalid") is False
+        assert Validator.is_longitude("") is False
+
+
+class TestIsTimezone:
+    """Test is_timezone function."""
+
+    def test_is_timezone_valid(self):
+        """Test valid IANA timezone identifiers."""
+        assert Validator.is_timezone("America/New_York") is True
+        assert Validator.is_timezone("UTC") is True
+        assert Validator.is_timezone("Europe/London") is True
+        assert Validator.is_timezone("Asia/Tokyo") is True
+        assert Validator.is_timezone("Australia/Sydney") is True
+        assert Validator.is_timezone("America/Los_Angeles") is True
+
+    def test_is_timezone_invalid(self):
+        """Test invalid timezone identifiers."""
+        assert Validator.is_timezone("Invalid/Timezone") is False
+        assert Validator.is_timezone("") is False
+        assert Validator.is_timezone("America/Invalid_City") is False
+        assert Validator.is_timezone("Not_A_Timezone") is False
+        assert Validator.is_timezone("XYZ") is False
+        assert Validator.is_timezone("123") is False
+
+
+class TestIsCoordinates:
+    """Test is_coordinates function."""
+
+    def test_is_coordinates_valid_strict(self):
+        """Test valid coordinate pairs with strict mode."""
+        assert Validator.is_coordinates(40.7128, -74.0060) is True  # NYC
+        assert Validator.is_coordinates(51.5074, -0.1278) is True  # London
+        assert Validator.is_coordinates(35.6762, 139.6503) is True  # Tokyo
+        assert Validator.is_coordinates(0, 0) is True  # Null Island
+
+    def test_is_coordinates_valid_non_strict(self):
+        """Test valid coordinate pairs with non-strict mode."""
+        assert Validator.is_coordinates(90, 180, strict=False) is True
+        assert Validator.is_coordinates(-90, -180, strict=False) is True
+        assert Validator.is_coordinates(0, 0, strict=False) is True
+
+    def test_is_coordinates_boundary_strict(self):
+        """Test boundary coordinates with strict mode."""
+        assert Validator.is_coordinates(90, 0) is False  # North pole
+        assert Validator.is_coordinates(-90, 0) is False  # South pole
+        assert Validator.is_coordinates(0, 180) is False  # Antimeridian
+        assert Validator.is_coordinates(0, -180) is False  # Antimeridian
+
+    def test_is_coordinates_invalid_latitude(self):
+        """Test coordinates with invalid latitude."""
+        assert Validator.is_coordinates(91, -74.0060) is False
+        assert Validator.is_coordinates(-91, -74.0060) is False
+        assert Validator.is_coordinates(180, 0) is False
+
+    def test_is_coordinates_invalid_longitude(self):
+        """Test coordinates with invalid longitude."""
+        assert Validator.is_coordinates(40.7128, 181) is False
+        assert Validator.is_coordinates(40.7128, -181) is False
+        assert Validator.is_coordinates(0, 360) is False
+
+    def test_is_coordinates_string_input(self):
+        """Test coordinates with string input."""
+        assert Validator.is_coordinates("40.7128", "-74.0060") is True
+        assert Validator.is_coordinates("51.5074", "-0.1278") is True
+        assert Validator.is_coordinates("invalid", "-74.0060") is False
+        assert Validator.is_coordinates("40.7128", "invalid") is False
+
+    def test_is_coordinates_mixed_input(self):
+        """Test coordinates with mixed float/string input."""
+        assert Validator.is_coordinates(40.7128, "-74.0060") is True
+        assert Validator.is_coordinates("40.7128", -74.0060) is True

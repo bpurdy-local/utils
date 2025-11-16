@@ -195,3 +195,140 @@ class TestIterableSlicing:
         """Test drop with more than length."""
         result = Iterable.drop([1, 2, 3], n=10)
         assert result == []
+
+
+class TestIterableFindMethods:
+    """Test find methods."""
+
+    def test_find_first_basic(self):
+        """Test find_first with basic predicate."""
+        numbers = [1, 2, 3, 4, 5]
+        result = Iterable.find_first(numbers, predicate=lambda x: x > 3)
+        assert result == 4
+
+    def test_find_first_no_match(self):
+        """Test find_first with no match."""
+        numbers = [1, 2, 3, 4, 5]
+        result = Iterable.find_first(numbers, predicate=lambda x: x > 10)
+        assert result is None
+
+    def test_find_first_empty_list(self):
+        """Test find_first with empty list."""
+        result = Iterable.find_first([], predicate=lambda x: x > 0)
+        assert result is None
+
+    def test_find_first_dict_predicate(self):
+        """Test find_first with dict predicate."""
+        users = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+        result = Iterable.find_first(users, predicate=lambda u: u["age"] > 28)
+        assert result == {"name": "Alice", "age": 30}
+
+    def test_find_first_returns_first_match(self):
+        """Test find_first returns first match when multiple exist."""
+        numbers = [1, 4, 2, 5, 3, 6]
+        result = Iterable.find_first(numbers, predicate=lambda x: x > 3)
+        assert result == 4  # First match, not 5 or 6
+
+    def test_find_first_type_preservation(self):
+        """Test find_first preserves type."""
+        strings = ["apple", "banana", "cherry"]
+        result = Iterable.find_first(strings, predicate=lambda s: "a" in s)
+        assert isinstance(result, str)
+        assert result == "apple"
+
+    def test_find_last_basic(self):
+        """Test find_last with basic predicate."""
+        numbers = [1, 2, 3, 4, 5, 4, 3]
+        result = Iterable.find_last(numbers, predicate=lambda x: x == 4)
+        assert result == 4
+
+    def test_find_last_no_match(self):
+        """Test find_last with no match."""
+        numbers = [1, 2, 3, 4, 5]
+        result = Iterable.find_last(numbers, predicate=lambda x: x > 10)
+        assert result is None
+
+    def test_find_last_empty_list(self):
+        """Test find_last with empty list."""
+        result = Iterable.find_last([], predicate=lambda x: x > 0)
+        assert result is None
+
+    def test_find_last_returns_last_match(self):
+        """Test find_last returns last match when multiple exist."""
+        numbers = [1, 4, 2, 5, 3, 6]
+        result = Iterable.find_last(numbers, predicate=lambda x: x > 3)
+        assert result == 6  # Last match, not 4 or 5
+
+    def test_find_last_dict_predicate(self):
+        """Test find_last with dict predicate."""
+        users = [
+            {"name": "Alice", "age": 30},
+            {"name": "Bob", "age": 25},
+            {"name": "Charlie", "age": 35},
+        ]
+        result = Iterable.find_last(users, predicate=lambda u: u["age"] > 28)
+        assert result == {"name": "Charlie", "age": 35}
+
+    def test_find_all_basic(self):
+        """Test find_all with basic predicate."""
+        numbers = [1, 2, 3, 4, 5]
+        result = Iterable.find_all(numbers, predicate=lambda x: x > 3)
+        assert result == [4, 5]
+
+    def test_find_all_no_matches(self):
+        """Test find_all with no matches."""
+        numbers = [1, 2, 3, 4, 5]
+        result = Iterable.find_all(numbers, predicate=lambda x: x > 10)
+        assert result == []
+        assert isinstance(result, list)
+
+    def test_find_all_empty_list(self):
+        """Test find_all with empty list."""
+        result = Iterable.find_all([], predicate=lambda x: x > 0)
+        assert result == []
+
+    def test_find_all_all_match(self):
+        """Test find_all when all items match."""
+        numbers = [2, 4, 6, 8]
+        result = Iterable.find_all(numbers, predicate=lambda x: x % 2 == 0)
+        assert result == [2, 4, 6, 8]
+
+    def test_find_all_some_match(self):
+        """Test find_all when some items match."""
+        numbers = [1, 2, 3, 4, 5, 6]
+        result = Iterable.find_all(numbers, predicate=lambda x: x % 2 == 0)
+        assert result == [2, 4, 6]
+
+    def test_find_all_preserves_order(self):
+        """Test find_all preserves order."""
+        numbers = [5, 1, 4, 2, 6, 3]
+        result = Iterable.find_all(numbers, predicate=lambda x: x > 3)
+        assert result == [5, 4, 6]
+
+    def test_find_all_dict_predicate(self):
+        """Test find_all with dict predicate."""
+        users = [
+            {"name": "Alice", "age": 30},
+            {"name": "Bob", "age": 25},
+            {"name": "Charlie", "age": 35},
+        ]
+        result = Iterable.find_all(users, predicate=lambda u: u["age"] > 28)
+        assert result == [{"name": "Alice", "age": 30}, {"name": "Charlie", "age": 35}]
+
+    def test_find_methods_with_complex_predicate(self):
+        """Test find methods with complex predicate."""
+        data = [
+            {"id": 1, "status": "active", "score": 85},
+            {"id": 2, "status": "inactive", "score": 92},
+            {"id": 3, "status": "active", "score": 78},
+        ]
+
+        # find_first
+        first = Iterable.find_first(
+            data, predicate=lambda x: x["status"] == "active" and x["score"] > 80
+        )
+        assert first == {"id": 1, "status": "active", "score": 85}
+
+        # find_all
+        all_active = Iterable.find_all(data, predicate=lambda x: x["status"] == "active")
+        assert len(all_active) == 2

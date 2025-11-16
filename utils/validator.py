@@ -133,3 +133,114 @@ class Validator:
             return True
         except ValueError:
             return False
+
+    @staticmethod
+    def is_latitude(value: float | str, *, strict: bool = True) -> bool:
+        """Validate latitude value (-90 to 90).
+
+        Examples:
+            >>> Validator.is_latitude(45.5)
+            True
+
+            >>> Validator.is_latitude(-90)
+            False
+
+            >>> Validator.is_latitude(-90, strict=False)
+            True
+
+            >>> Validator.is_latitude(91)
+            False
+
+            >>> Validator.is_latitude("45.5")
+            True
+
+            >>> Validator.is_latitude("invalid")
+            False
+        """
+        try:
+            lat = float(value)
+            if strict:
+                return -90 < lat < 90
+            return -90 <= lat <= 90
+        except (ValueError, TypeError):
+            return False
+
+    @staticmethod
+    def is_longitude(value: float | str, *, strict: bool = True) -> bool:
+        """Validate longitude value (-180 to 180).
+
+        Examples:
+            >>> Validator.is_longitude(-122.4)
+            True
+
+            >>> Validator.is_longitude(180)
+            False
+
+            >>> Validator.is_longitude(180, strict=False)
+            True
+
+            >>> Validator.is_longitude(181)
+            False
+
+            >>> Validator.is_longitude("-122.4")
+            True
+        """
+        try:
+            lon = float(value)
+            if strict:
+                return -180 < lon < 180
+            return -180 <= lon <= 180
+        except (ValueError, TypeError):
+            return False
+
+    @staticmethod
+    def is_timezone(value: str) -> bool:
+        """Validate IANA timezone identifier.
+
+        Examples:
+            >>> Validator.is_timezone("America/New_York")
+            True
+
+            >>> Validator.is_timezone("UTC")
+            True
+
+            >>> Validator.is_timezone("Europe/London")
+            True
+
+            >>> Validator.is_timezone("Invalid/Timezone")
+            False
+
+            >>> Validator.is_timezone("EST")
+            False
+        """
+        try:
+            from zoneinfo import ZoneInfo
+
+            # Try to create a ZoneInfo object
+            ZoneInfo(value)
+            return True
+        except Exception:
+            return False
+
+    @staticmethod
+    def is_coordinates(
+        latitude: float | str, longitude: float | str, *, strict: bool = True
+    ) -> bool:
+        """Validate coordinate pair (latitude, longitude).
+
+        Examples:
+            >>> Validator.is_coordinates(40.7128, -74.0060)
+            True
+
+            >>> Validator.is_coordinates("40.7128", "-74.0060")
+            True
+
+            >>> Validator.is_coordinates(91, -74.0060)
+            False
+
+            >>> Validator.is_coordinates(40.7128, 181)
+            False
+        """
+        return Validator.is_latitude(latitude, strict=strict) and Validator.is_longitude(
+            longitude, strict=strict
+        )

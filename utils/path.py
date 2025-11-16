@@ -10,6 +10,30 @@ class Path:
     """Static utility class for filesystem path operations."""
 
     @staticmethod
+    def exists(path: str | PathLib) -> bool:
+        """Check if a path exists (file or directory).
+
+        Args:
+            path: Path to check
+
+        Returns:
+            True if path exists, False otherwise
+
+        Examples:
+            >>> Path.exists("/tmp/test.txt")
+            False
+
+            >>> Path.write("/tmp/test.txt", content="hello")
+            5
+            >>> Path.exists("/tmp/test.txt")
+            True
+
+            >>> Path.exists("/usr/bin")
+            True
+        """
+        return PathLib(path).exists()
+
+    @staticmethod
     def read(path: str | PathLib, *, encoding: str = "utf-8") -> str:
         """Read text content from file."""
         return PathLib(path).read_text(encoding=encoding)

@@ -60,3 +60,51 @@ class TestPathProperties:
         assert Path.get_stem("file.txt") == "file"
         assert Path.get_stem("archive.tar.gz") == "archive.tar"
         assert Path.get_stem("/path/to/file.txt") == "file"
+
+
+class TestPathExists:
+    """Test exists method."""
+
+    def test_exists_file(self):
+        """Test exists with existing file."""
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            temp_path = f.name
+
+        try:
+            assert Path.exists(temp_path) is True
+        finally:
+            StdPath(temp_path).unlink()
+
+    def test_exists_directory(self):
+        """Test exists with existing directory."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            assert Path.exists(temp_dir) is True
+
+    def test_exists_nonexistent(self):
+        """Test exists with non-existent path."""
+        assert Path.exists("/nonexistent/path/to/file.txt") is False
+
+    def test_exists_with_path_object(self):
+        """Test exists with Path object."""
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            temp_path = StdPath(f.name)
+
+        try:
+            assert Path.exists(temp_path) is True
+        finally:
+            temp_path.unlink()
+
+    def test_exists_relative_path(self):
+        """Test exists with relative path."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            import os
+
+            original_dir = os.getcwd()
+            try:
+                os.chdir(temp_dir)
+                # Create a file in the temp directory
+                StdPath("test.txt").write_text("test")
+                assert Path.exists("test.txt") is True
+                assert Path.exists("nonexistent.txt") is False
+            finally:
+                os.chdir(original_dir)

@@ -47,7 +47,14 @@ class Dict:
 
     @staticmethod
     def deep_set(d: dict[str, Any], *, path: str, value: Any) -> None:
-        """Set value in nested dictionary using dot-separated path."""
+        """Set value in nested dictionary using dot-separated path.
+
+        Examples:
+            >>> d = {}
+            >>> Dict.deep_set(d, path='user.profile.name', value='Alice')
+            >>> d
+            {'user': {'profile': {'name': 'Alice'}}}
+        """
         # Create nested dicts as needed along the path
         keys = path.split(".")
         current = d
@@ -59,7 +66,15 @@ class Dict:
 
     @staticmethod
     def merge(d: dict[str, Any], *, other: dict[str, Any], deep: bool = False) -> dict[str, Any]:
-        """Merge two dictionaries, optionally performing deep merge."""
+        """Merge two dictionaries, optionally performing deep merge.
+
+        Examples:
+            >>> Dict.merge({'a': 1, 'b': 2}, other={'b': 3, 'c': 4})
+            {'a': 1, 'b': 3, 'c': 4}
+
+            >>> Dict.merge({'a': {'b': 1}}, other={'a': {'c': 2}}, deep=True)
+            {'a': {'b': 1, 'c': 2}}
+        """
         if not deep:
             return {**d, **other}
 
@@ -96,19 +111,37 @@ class Dict:
 
     @staticmethod
     def map_keys(d: dict[str, Any], *, func: Callable[[str], str]) -> dict[str, Any]:
-        """Transform all keys in dictionary using function."""
+        """Transform all keys in dictionary using function.
+
+        Examples:
+            >>> Dict.map_keys({'a': 1, 'b': 2}, func=str.upper)
+            {'A': 1, 'B': 2}
+        """
         # Transform all keys using function
         return {func(k): v for k, v in d.items()}
 
     @staticmethod
     def filter(d: dict[str, Any], *, predicate: Callable[[str, Any], bool]) -> dict[str, Any]:
-        """Filter dictionary keeping only entries matching predicate."""
+        """Filter dictionary keeping only entries matching predicate.
+
+        Examples:
+            >>> Dict.filter({'a': 1, 'b': 2, 'c': 3}, predicate=lambda k, v: v > 1)
+            {'b': 2, 'c': 3}
+        """
         # Keep only key-value pairs that match predicate
         return {k: v for k, v in d.items() if predicate(k, v)}
 
     @staticmethod
     def defaults(d: dict[str, Any], *, defaults: dict[str, Any]) -> dict[str, Any]:
-        """Add default values for missing keys in dictionary."""
+        """Add default values for missing keys in dictionary.
+
+        Examples:
+            >>> Dict.defaults({'a': 1}, defaults={'b': 2, 'c': 3})
+            {'a': 1, 'b': 2, 'c': 3}
+
+            >>> Dict.defaults({'a': 1, 'b': 2}, defaults={'b': 99})
+            {'a': 1, 'b': 2}
+        """
         # Add default values for missing keys
         result = d.copy()
         for key, value in defaults.items():
@@ -118,7 +151,12 @@ class Dict:
 
     @staticmethod
     def compact(d: dict[str, Any]) -> dict[str, Any]:
-        """Remove all None values from dictionary."""
+        """Remove all None values from dictionary.
+
+        Examples:
+            >>> Dict.compact({'a': 1, 'b': None, 'c': 3})
+            {'a': 1, 'c': 3}
+        """
         # Remove all None values
         return {k: v for k, v in d.items() if v is not None}
 

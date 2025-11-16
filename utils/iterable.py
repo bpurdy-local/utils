@@ -75,6 +75,78 @@ class Iterable:
         return items[-1]
 
     @staticmethod
+    def find_first(items: list[T], *, predicate: Callable[[T], bool]) -> T | None:
+        """Return first item matching predicate or None if no match.
+
+        Args:
+            items: The list to search
+            predicate: Function to test each item (keyword-only)
+
+        Returns:
+            First matching item or None
+
+        Examples:
+            >>> numbers = [1, 2, 3, 4, 5]
+            >>> Iterable.find_first(numbers, predicate=lambda x: x > 3)
+            4
+
+            >>> Iterable.find_first(numbers, predicate=lambda x: x > 10)
+
+            >>> users = [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]
+            >>> Iterable.find_first(users, predicate=lambda u: u["age"] > 28)
+            {'name': 'Alice', 'age': 30}
+        """
+        for item in items:
+            if predicate(item):
+                return item
+        return None
+
+    @staticmethod
+    def find_last(items: list[T], *, predicate: Callable[[T], bool]) -> T | None:
+        """Return last item matching predicate or None if no match.
+
+        Args:
+            items: The list to search
+            predicate: Function to test each item (keyword-only)
+
+        Returns:
+            Last matching item or None
+
+        Examples:
+            >>> numbers = [1, 2, 3, 4, 5, 4, 3]
+            >>> Iterable.find_last(numbers, predicate=lambda x: x == 4)
+            4
+
+            >>> Iterable.find_last(numbers, predicate=lambda x: x > 10)
+        """
+        last_match = None
+        for item in items:
+            if predicate(item):
+                last_match = item
+        return last_match
+
+    @staticmethod
+    def find_all(items: list[T], *, predicate: Callable[[T], bool]) -> list[T]:
+        """Return all items matching predicate.
+
+        Args:
+            items: The list to search
+            predicate: Function to test each item (keyword-only)
+
+        Returns:
+            List of all matching items (empty list if no matches)
+
+        Examples:
+            >>> numbers = [1, 2, 3, 4, 5]
+            >>> Iterable.find_all(numbers, predicate=lambda x: x > 3)
+            [4, 5]
+
+            >>> Iterable.find_all(numbers, predicate=lambda x: x > 10)
+            []
+        """
+        return [item for item in items if predicate(item)]
+
+    @staticmethod
     def group_by(items: list[T], *, key: Callable[[T], K]) -> dict[K, list[T]]:
         """Group items by key function.
 
