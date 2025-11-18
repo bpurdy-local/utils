@@ -7,7 +7,9 @@ name = "utils"
 version = "0.1.0"
 description = "Utility library with string wrappers and common functions"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "requests>=2.31.0",
+]
 
 [project.optional-dependencies]
 dev = [

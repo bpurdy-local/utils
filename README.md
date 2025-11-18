@@ -616,10 +616,137 @@ fanged = Decode.fang("hxxps://malicious-site[.]com")  # "https://malicious-site.
 fanged_ip = Decode.fang("192[.]168[.]1[.]1")  # "192.168.1.1"
 ```
 
+### Session Utilities
+
+The `Session` class extends `requests.Session` with automatic timeout and convenient authentication:
+
+```python
+from utils import Session
+from utils.session import BearerAuth, BasicAuth, APIKeyAuth, TokenAuth
+
+# Create a session with default 30-second timeout
+session = Session()
+
+# Configure with authentication in constructor
+session = Session(
+    timeout=60,
+    headers={"User-Agent": "MyApp/1.0"},
+    auth=BearerAuth("your-token-here")
+)
+
+# Set default headers (applied to all requests)
+session.set_default_header("X-Custom-Header", "value")
+
+# Authentication options using dedicated auth classes
+session.set_auth(BearerAuth("your-bearer-token"))
+session.set_auth(BasicAuth("username", "password"))
+session.set_auth(APIKeyAuth("your-api-key"))  # Uses X-API-Key header by default
+session.set_auth(APIKeyAuth("your-key", header_name="X-Custom-Key"))
+session.set_auth(TokenAuth("your-token", scheme="Token"))  # Custom scheme
+
+# Or create custom auth class
+class CustomAuth:
+    def apply(self, session):
+        session.set_default_header("Authorization", "Custom token")
+
+session.set_auth(CustomAuth())
+
+# Use all standard requests.Session methods (get, post, put, delete, etc.)
+# Timeout is automatically applied to all requests
+response = session.get("https://api.example.com/users")
+response = session.post("https://api.example.com/users", json={"name": "Alice"})
+
+# Convenient get_json() method that fetches and parses in one call
+data = session.get_json("https://api.example.com/users/123")
+users = session.get_json("https://api.example.com/users", params={"page": 1})
+
+# Use standard response properties (from requests library)
+if response.ok:  # 200-299 status codes
+    print("Success!")
+elif response.status_code >= 400:
+    print(f"Error: {response.status_code}")
+
+# Context manager support (inherited from requests.Session)
+with Session(timeout=30, auth=BearerAuth("token123")) as session:
+    data = session.get_json("https://api.example.com/data")
+
+# Track metrics and configure retries with URL patterns
+from utils.session import ExponentialRetry, LinearRetry, ConstantRetry
+
+session = Session()
+
+# Different retry strategies
+session.add_url_pattern(
+    r"/api/users",
+    tag="users_api",
+    retry=ExponentialRetry(attempts=3, delay=1.0, backoff=2.0)  # 1s, 2s, 4s
+)
+session.add_url_pattern(
+    r"/api/orders/\d+",
+    tag="orders_api",
+    retry=LinearRetry(attempts=4, delay=1.0, backoff=1.0)  # 1s, 2s, 3s, 4s
+)
+session.add_url_pattern(
+    r"/api/data",
+    tag="data_api",
+    retry=ConstantRetry(attempts=5, delay=2.0)  # 2s, 2s, 2s, 2s, 2s
+)
+
+# Make requests - metrics are tracked automatically
+session.get("https://api.example.com/api/users")
+session.get("https://api.example.com/api/users/123")
+session.get("https://api.example.com/api/orders/456")
+
+# View metrics
+print(session.metrics)  # {"users_api": 2, "orders_api": 1}
+print(session.get_metrics())  # Get a copy of metrics
+
+# Compare metrics snapshots
+snapshot = session.get_metrics()
+# ... make more requests ...
+session.get("https://api.example.com/api/users")
+session.get("https://api.example.com/api/data")
+diff = session.compare_metrics(snapshot)
+print(diff)  # {"users_api": 1, "data_api": 1} - shows only changes
+
+# Reset metrics
+session.reset_metrics()
+
+# Advanced retry strategies
+from utils.session import JitterRetry, FibonacciRetry, CappedRetry, DurationRetry
+
+# Jitter retry (prevents thundering herd)
+jitter = JitterRetry(attempts=4, delay=1.0, backoff=2.0)
+
+# Fibonacci retry (1s, 1s, 2s, 3s, 5s, 8s)
+fib = FibonacciRetry(attempts=6, delay=1.0)
+
+# Capped retry (prevent extremely long delays)
+base = ExponentialRetry(attempts=10, delay=1.0, backoff=2.0)
+capped = CappedRetry(base, max_delay=30.0)  # Never wait more than 30s
+
+# Duration-based retry (keep retrying for X seconds)
+duration = DurationRetry(
+    duration=60.0,  # Retry for up to 60 seconds
+    initial_delay=0.1,  # Start with 0.1s delay
+    backoff=1.5,  # Increase delay by 1.5x each time
+    max_delay=5.0  # Cap delay at 5 seconds
+)
+# Delays: 0.1s, 0.15s, 0.225s, 0.34s... up to 5s max, until 60s elapsed
+
+# Automatic rate limiting (429 handling)
+session = Session(
+    handle_rate_limit=True,  # Default: True
+    rate_limit_max_wait=60.0  # Max wait time for rate limits
+)
+# Session will automatically wait when it receives 429 responses
+# and respect Retry-After headers
+```
+
 ## Features
 
 - **Static Utility Classes**: Pure static methods with no inheritance - clean, functional API
-- **14 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Decorators, Logger, Encode, Decode
+- **15 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Decorators, Logger, Encode, Decode, Session
 - **String Utilities** (21 methods): Truncation, case conversions, slug generation, padding, validation, email/URL extraction, hashing
 - **Integer Utilities** (15 methods): Properties (even/odd/prime), clamping, conversions (roman/words), math operations, byte formatting, percentages
 - **Iterable Utilities** (22 methods): Chunking, flattening, filtering, grouping, partitioning, aggregations, sorting, finding items
@@ -632,8 +759,9 @@ fanged_ip = Decode.fang("192[.]168[.]1[.]1")  # "192.168.1.1"
 - **Regex Utilities** (8 methods): Pattern matching, searching, replacing, splitting, group extraction, validation
 - **Logger Utilities**: Structured JSON logging with thread-local context, key normalization, log searching, custom type handling
 - **Encode/Decode Utilities**: Base64, URL, HTML encoding/decoding, and defang/fang for security analysis
+- **Session Utilities**: Enhanced HTTP session wrapper with authentication, URL building, JSON helpers, and status checking
 - **Keyword-Only Arguments**: All parameters (except first) are keyword-only for clarity and safety
 - **Type Hints**: Complete type annotations for all methods
-- **Zero Dependencies**: No external runtime dependencies required (optional: arrow for enhanced datetime parsing)
+- **Minimal Dependencies**: Only requests library required; optional dependencies include arrow for enhanced datetime parsing
 - **Comprehensive Tests**: 481 tests covering all utilities, edge cases, and error conditions
 

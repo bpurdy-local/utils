@@ -14,6 +14,7 @@ This is a Python utility library that provides static utility classes for common
 - **Decorators** - Function decorators (debounce, throttle, retry, memoize, once)
 - **Logger** - Structured JSON logging with persistent context
 - **Encode**, **Decode** - Encoding/decoding operations (base64, URL, HTML, fang/defang)
+- **Session** - Enhanced HTTP session with auto-timeout and dict-based auth (inherits from requests.Session)
 
 All utility classes use static methods that accept the value to operate on as the first positional parameter, followed by keyword-only arguments (enforced with the `*` separator). This design provides clear, consistent APIs without the overhead of instantiation or inheritance.
 
@@ -127,9 +128,16 @@ Each utility class lives in its own module under `utils/`:
 - `decode.py` - Decode utility class (4 methods: base64, URL, HTML, fang)
 - `json_encoder.py` - JsonEncoder class for custom JSON serialization (used by Logger)
 
+**HTTP/Networking:**
+- `session/` - Session package for HTTP requests
+  - `session.py` - Session class (inherits from requests.Session) with auto-timeout
+  - `auth.py` - Authentication classes (BearerAuth, BasicAuth, APIKeyAuth, TokenAuth)
+
 ### Static Utility Class Pattern
 
-All utility classes follow this pattern:
+**Note**: The Session class is an exception to the static utility pattern. It inherits from `requests.Session` and provides instance-based methods for HTTP requests, rather than static methods. This is necessary because HTTP sessions maintain state (cookies, connection pools, etc.).
+
+Most utility classes follow this pattern:
 
 1. Define as a regular class (no inheritance from base types)
 2. Implement static methods using `@staticmethod` decorator
@@ -181,7 +189,8 @@ All public exports are defined in `utils/__init__.py` via the `__all__` list. Wh
 ### Python Config (`pyproject.toml`)
 
 - **Python Version**: Requires Python 3.11+
-- **No Runtime Dependencies**: The library has zero external dependencies
+- **Runtime Dependencies**:
+  - `requests>=2.31.0` - Required for Session class
 - **Optional Dependencies**:
   - `dev` - pytest, pytest-cov
   - `datetime` - arrow (for enhanced datetime support)
@@ -206,7 +215,7 @@ When adding new utility classes or utilities:
 5. Ensure type hints are complete
 6. Run tests and type checking before committing
 
-For utility classes:
+For static utility classes:
 - Use static methods with `@staticmethod` decorator
 - First parameter is the value to operate on
 - All other parameters must be keyword-only (use `*` separator)
@@ -215,6 +224,12 @@ For utility classes:
 - Maintain consistency with existing utility class patterns
 - Do NOT inherit from base types
 - Do NOT implement instance methods or constructors
+
+For stateful utility classes (like Session):
+- Only use when state is necessary (connection pools, cookies, etc.)
+- Inherit from appropriate base class if extending existing functionality
+- Document clearly why static methods are not appropriate
+- Provide comprehensive docstrings for all methods
 
 Example pattern:
 ```python
