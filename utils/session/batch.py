@@ -3,6 +3,9 @@ from typing import Any
 
 import requests
 
+from utils.dict import Dict
+from utils.iterable import Iterable
+
 
 class BatchRequest:
     def __init__(
@@ -68,15 +71,9 @@ class BatchExecutor:
     def _flatten_request_groups(
         self, request_groups: tuple[BatchRequest | list[BatchRequest], ...]
     ) -> list[BatchRequest]:
-        flattened = []
-
-        for group in request_groups:
-            if isinstance(group, list):
-                flattened.extend(group)
-            else:
-                flattened.append(group)
-
-        return flattened
+        # Convert tuple to list and flatten using Iterable utility
+        # This handles both single BatchRequest items and lists of BatchRequest items
+        return Iterable.flatten(list(request_groups))
 
     def _execute_single_request(self, batch_request: BatchRequest) -> requests.Response:
         request_kwargs = {
@@ -87,6 +84,6 @@ class BatchExecutor:
             **batch_request.kwargs,
         }
 
-        request_kwargs = {key: value for key, value in request_kwargs.items() if value is not None}
+        request_kwargs = Dict.compact(request_kwargs)
 
         return self.session.request(batch_request.method, batch_request.url, **request_kwargs)

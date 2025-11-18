@@ -228,3 +228,31 @@ class String:
         hash_obj = hashlib.new(algorithm)
         hash_obj.update(text.encode("utf-8"))
         return hash_obj.hexdigest()
+
+    @staticmethod
+    def is_blank(text: str | None) -> bool:
+        """Check if string is None, empty, or contains only whitespace.
+
+        More concise than: text is None or len(text.strip()) == 0
+
+        Args:
+            text: String to check (can be None)
+
+        Returns:
+            True if text is None, empty, or only whitespace
+
+        Examples:
+            >>> String.is_blank(None)
+            True
+            >>> String.is_blank("")
+            True
+            >>> String.is_blank("  ")
+            True
+            >>> String.is_blank("  \\t\\n  ")
+            True
+            >>> String.is_blank("hello")
+            False
+            >>> String.is_blank("  hello  ")
+            False
+        """
+        return not text or not text.strip()

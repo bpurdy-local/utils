@@ -98,6 +98,10 @@ String.hash("hello")  # "5d41402abc4b2a76b9719d911017c592" (MD5)
 # Validation
 String.is_email("user@example.com")  # True
 String.is_url("https://example.com")  # True
+String.is_blank("")  # True
+String.is_blank("  ")  # True
+String.is_blank(None)  # True
+String.is_blank("hello")  # False
 
 # Extraction
 text = "Contact us at info@example.com or support@example.com"
@@ -747,7 +751,7 @@ session = Session(
 
 - **Static Utility Classes**: Pure static methods with no inheritance - clean, functional API
 - **15 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Decorators, Logger, Encode, Decode, Session
-- **String Utilities** (21 methods): Truncation, case conversions, slug generation, padding, validation, email/URL extraction, hashing
+- **String Utilities** (22 methods): Truncation, case conversions, slug generation, padding, validation (email/URL/blank), email/URL extraction, hashing
 - **Integer Utilities** (15 methods): Properties (even/odd/prime), clamping, conversions (roman/words), math operations, byte formatting, percentages
 - **Iterable Utilities** (22 methods): Chunking, flattening, filtering, grouping, partitioning, aggregations, sorting, finding items
 - **Dict Utilities** (18 methods): Pick/omit keys, deep get/set, merging, transformations, key case conversions, flattening/unflattening

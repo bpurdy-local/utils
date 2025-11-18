@@ -6,6 +6,7 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from utils.dict import Dict
 from utils.json_encoder import JsonEncoder
 from utils.string import String
 
@@ -51,9 +52,8 @@ class Logger:
     def bind_multiple(**kwargs):
         """Bind multiple key-value pairs to the logging context."""
         context = Logger._get_context()
-        for key, value in kwargs.items():
-            normalized_key = Logger._normalize_key(key)
-            context[normalized_key] = value
+        normalized_kwargs = Dict.map_keys(kwargs, func=Logger._normalize_key)
+        context.update(normalized_kwargs)
 
     @staticmethod
     def unbind(key: str):
@@ -78,17 +78,9 @@ class Logger:
         if len(args) == 1 and isinstance(args[0], str) and not kwargs:
             return {"message": args[0]}
         elif len(args) == 1 and isinstance(args[0], dict) and not kwargs:
-            normalized = {}
-            for key, value in args[0].items():
-                normalized_key = cls._normalize_key(key)
-                normalized[normalized_key] = value
-            return normalized
+            return Dict.map_keys(args[0], func=cls._normalize_key)
         elif not args and kwargs:
-            normalized = {}
-            for key, value in kwargs.items():
-                normalized_key = cls._normalize_key(key)
-                normalized[normalized_key] = value
-            return normalized
+            return Dict.map_keys(kwargs, func=cls._normalize_key)
         else:
             raise ValueError("Logger accepts either: a string, a dict, or keyword arguments")
 

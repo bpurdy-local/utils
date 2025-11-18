@@ -223,3 +223,41 @@ class TestStringExtraction:
     def test_extract_urls_none(self):
         urls = String.extract_urls("No URLs here")
         assert urls == []
+
+
+class TestStringIsBlank:
+    def test_is_blank_none(self):
+        assert String.is_blank(None) is True
+
+    def test_is_blank_empty_string(self):
+        assert String.is_blank("") is True
+
+    def test_is_blank_whitespace_only(self):
+        assert String.is_blank(" ") is True
+        assert String.is_blank("  ") is True
+        assert String.is_blank("   ") is True
+
+    def test_is_blank_mixed_whitespace(self):
+        assert String.is_blank("  \t  ") is True
+        assert String.is_blank("\n") is True
+        assert String.is_blank("\r\n") is True
+        assert String.is_blank("  \t\n  ") is True
+
+    def test_is_blank_with_content(self):
+        assert String.is_blank("hello") is False
+        assert String.is_blank("hello world") is False
+
+    def test_is_blank_with_content_and_whitespace(self):
+        assert String.is_blank("  hello  ") is False
+        assert String.is_blank("\thello\n") is False
+        assert String.is_blank("  a  ") is False
+
+    def test_is_blank_single_char(self):
+        assert String.is_blank("a") is False
+        assert String.is_blank("1") is False
+        assert String.is_blank("!") is False
+
+    def test_is_blank_special_chars(self):
+        # Special characters are considered content
+        assert String.is_blank("@") is False
+        assert String.is_blank("#") is False
