@@ -4,7 +4,6 @@ from utils.convert import Convert
 
 
 class TestConvertToBool:
-
     def test_native_bool_true(self):
         assert Convert.to_bool(True) is True
 
@@ -77,7 +76,6 @@ class TestConvertToBool:
 
 
 class TestConvertToInt:
-
     def test_native_int(self):
         assert Convert.to_int(123) == 123
 
@@ -119,7 +117,6 @@ class TestConvertToInt:
 
 
 class TestConvertToFloat:
-
     def test_native_float(self):
         assert Convert.to_float(123.45) == 123.45
 
@@ -158,7 +155,6 @@ class TestConvertToFloat:
 
 
 class TestConvertToStr:
-
     def test_int(self):
         assert Convert.to_str(123) == "123"
 
@@ -188,7 +184,6 @@ class TestConvertToStr:
 
 
 class TestConvertToNumber:
-
     def test_int_stays_int(self):
         result = Convert.to_number("123")
         assert result == 123
@@ -234,7 +229,6 @@ class TestConvertToNumber:
 
 
 class TestConvertBytesFromHuman:
-
     def test_bytes(self):
         assert Convert.bytes_from_human("100B") == 100
         assert Convert.bytes_from_human("100") == 100
@@ -277,7 +271,6 @@ class TestConvertBytesFromHuman:
 
 
 class TestConvertDuration:
-
     def test_seconds(self):
         assert Convert.duration("30s") == 30
         assert Convert.duration("60s") == 60
@@ -321,7 +314,6 @@ class TestConvertDuration:
 
 
 class TestConvertSafeCast:
-
     def test_already_correct_type(self):
         assert Convert.safe_cast(123, int) == 123
         assert Convert.safe_cast("hello", str) == "hello"
@@ -356,7 +348,6 @@ class TestConvertSafeCast:
 
 
 class TestConvertToList:
-
     def test_comma_separated_string(self):
         assert Convert.to_list("a,b,c") == ["a", "b", "c"]
 
@@ -397,7 +388,6 @@ class TestConvertToList:
 
 
 class TestConvertToDict:
-
     def test_native_dict(self):
         d = {"a": 1, "b": 2}
         assert Convert.to_dict(d) == d
@@ -415,7 +405,6 @@ class TestConvertToDict:
 
 
 class TestConvertEdgeCases:
-
     def test_empty_string_conversions(self):
         assert Convert.to_int("") is None
         assert Convert.to_float("") is None

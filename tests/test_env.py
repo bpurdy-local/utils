@@ -16,7 +16,6 @@ def clean_env():
 
 
 class TestEnvGet:
-
     def test_get_existing_variable(self):
         os.environ["TEST_VAR"] = "test_value"
         assert Env.get("TEST_VAR") == "test_value"
@@ -37,7 +36,6 @@ class TestEnvGet:
 
 
 class TestEnvGetInt:
-
     def test_get_int_valid(self):
         os.environ["INT_VAR"] = "42"
         assert Env.get_int("INT_VAR") == 42
@@ -60,7 +58,6 @@ class TestEnvGetInt:
 
 
 class TestEnvGetFloat:
-
     def test_get_float_valid(self):
         os.environ["FLOAT_VAR"] = "3.14"
         assert Env.get_float("FLOAT_VAR") == 3.14
@@ -83,7 +80,6 @@ class TestEnvGetFloat:
 
 
 class TestEnvGetBool:
-
     def test_get_bool_true_values(self):
         true_values = ["true", "True", "TRUE", "1", "yes", "YES", "on", "ON", "t", "T", "y", "Y"]
         for value in true_values:
@@ -91,7 +87,21 @@ class TestEnvGetBool:
             assert Env.get_bool("BOOL_VAR") is True, f"Failed for value: {value}"
 
     def test_get_bool_false_values(self):
-        false_values = ["false", "False", "FALSE", "0", "no", "NO", "off", "OFF", "f", "F", "n", "N", ""]
+        false_values = [
+            "false",
+            "False",
+            "FALSE",
+            "0",
+            "no",
+            "NO",
+            "off",
+            "OFF",
+            "f",
+            "F",
+            "n",
+            "N",
+            "",
+        ]
         for value in false_values:
             os.environ["BOOL_VAR"] = value
             assert Env.get_bool("BOOL_VAR") is False, f"Failed for value: {value}"
@@ -107,7 +117,6 @@ class TestEnvGetBool:
 
 
 class TestEnvGetList:
-
     def test_get_list_comma_separated(self):
         os.environ["LIST_VAR"] = "a,b,c"
         assert Env.get_list("LIST_VAR") == ["a", "b", "c"]
@@ -137,7 +146,6 @@ class TestEnvGetList:
 
 
 class TestEnvGetPath:
-
     def test_get_path_valid(self):
         os.environ["PATH_VAR"] = "/tmp/test"
         result = Env.get_path("PATH_VAR")
@@ -159,7 +167,6 @@ class TestEnvGetPath:
 
 
 class TestEnvSetUnset:
-
     def test_set_variable(self):
         Env.set("NEW_VAR", "new_value")
         assert os.environ["NEW_VAR"] == "new_value"
@@ -174,7 +181,6 @@ class TestEnvSetUnset:
 
 
 class TestEnvHas:
-
     def test_has_existing_variable(self):
         os.environ["EXISTING"] = "value"
         assert Env.has("EXISTING") is True
@@ -184,7 +190,6 @@ class TestEnvHas:
 
 
 class TestEnvLoadDotenv:
-
     def test_load_dotenv_basic(self):
         with tempfile.NamedTemporaryFile(mode="w", suffix=".env", delete=False) as f:
             f.write("KEY1=value1\n")
@@ -273,7 +278,6 @@ class TestEnvLoadDotenv:
 
 
 class TestEnvToDict:
-
     def test_to_dict(self):
         os.environ["TEST1"] = "value1"
         os.environ["TEST2"] = "value2"
@@ -285,7 +289,6 @@ class TestEnvToDict:
 
 
 class TestEnvGetWithPrefix:
-
     def test_get_with_prefix(self):
         os.environ["APP_NAME"] = "myapp"
         os.environ["APP_VERSION"] = "1.0"
@@ -299,7 +302,6 @@ class TestEnvGetWithPrefix:
 
 
 class TestEnvRequire:
-
     def test_require_all_present(self):
         os.environ["REQ1"] = "value1"
         os.environ["REQ2"] = "value2"

@@ -62,7 +62,6 @@ def sample_profile():
 
 
 class TestJsonDBBasicOperations:
-
     def test_save_and_load(self, temp_db, sample_user):
         temp_db.save(sample_user)
         loaded = temp_db.load(User, key="123")
@@ -146,7 +145,6 @@ class TestJsonDBBasicOperations:
 
 
 class TestJsonDBMultipleModels:
-
     def test_different_model_classes(self, temp_db, sample_user, sample_post):
         temp_db.save(sample_user)
         temp_db.save(sample_post)
@@ -249,7 +247,6 @@ class TestJsonDBMultipleModels:
 
 
 class TestJsonDBNestedData:
-
     def test_nested_lists(self, temp_db, sample_profile):
         temp_db.save(sample_profile)
         loaded = temp_db.load(sample_profile)
@@ -285,7 +282,6 @@ class TestJsonDBNestedData:
 
 
 class TestJsonDBPathHandling:
-
     def test_custom_base_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             custom_path = Path(tmpdir) / "custom" / "db"
@@ -321,7 +317,6 @@ class TestJsonDBPathHandling:
 
 
 class TestJsonDBEdgeCases:
-
     def test_overwrite_existing(self, temp_db):
         user1 = User(id="user", name="Alice", email="alice@example.com", age=30)
         user2 = User(id="user", name="Bob", email="bob@example.com", age=25)
@@ -358,7 +353,6 @@ class TestJsonDBEdgeCases:
 
 
 class TestJsonDBIndexField:
-
     def test_model_with_index_field(self, temp_db):
         user = User(id="user-123", name="Alice", email="alice@example.com", age=30)
         key = temp_db.save(user)

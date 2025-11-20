@@ -407,6 +407,110 @@ Validator.is_timezone("Invalid/Zone")  # False
 Validator.is_coordinates(40.7128, -74.0060)  # True (valid lat/lon pair)
 ```
 
+### Terminal Utilities
+
+The `Terminal` class provides static methods for terminal input, prompts, and formatting:
+
+```python
+from utils import Terminal
+
+# Basic text input
+name = Terminal.prompt("Enter your name")  # User types: John
+port = Terminal.prompt("Enter port", default="8080")  # Press Enter for default
+
+# Prompt with custom validator (returns tuple: (is_valid, error_message))
+email = Terminal.prompt(
+    "Enter email",
+    validator=lambda x: ((True, None) if "@" in x else (False, "Must contain @"))
+)
+
+# Yes/no confirmation
+if Terminal.confirm("Delete file?"):
+    print("Deleting...")
+if Terminal.confirm("Continue?", default=True):  # [Y/n] format
+    print("Continuing...")
+
+# Password input (hidden)
+password = Terminal.password()  # Default message
+api_key = Terminal.password("Enter API key")
+
+# Multiple choice selection
+env = Terminal.choice("Select environment", choices=["dev", "staging", "prod"])
+env = Terminal.choice("Select env", choices=["dev", "prod"], default="dev")
+
+# Numbered selection
+idx, option = Terminal.select("Choose option", options=["Apple", "Banana", "Cherry"])
+# Displays:
+# Choose option:
+#   1. Apple
+#   2. Banana
+#   3. Cherry
+
+# Multi-line input
+sql = Terminal.multiline("Enter SQL query", terminator="GO")
+# User types multiple lines, ends with "GO"
+
+# Integer input with validation
+age = Terminal.prompt_int("Enter age", min_val=0, max_val=120)
+port = Terminal.prompt_int("Port", default=8080, min_val=1, max_val=65535)
+
+# Float input with validation
+rate = Terminal.prompt_float("Enter rate", min_val=0.0, max_val=1.0)
+price = Terminal.prompt_float("Price", default=9.99)
+
+# Custom validation
+email = Terminal.validate_input(
+    "Enter email",
+    validator=lambda x: "@" in x,
+    error_message="Must be a valid email"
+)
+
+# Terminal formatting
+Terminal.clear()  # Clear screen
+Terminal.print_line()  # Print horizontal line (80 chars)
+Terminal.print_line("=", width=40)  # Custom character and width
+
+# Print text in a box
+Terminal.print_box("Hello World")
+Terminal.print_box("Multi\nLine\nText", padding=2, width=30)
+# ┌──────────────────────────┐
+# │                          │
+# │  Multi                   │
+# │  Line                    │
+# │  Text                    │
+# │                          │
+# └──────────────────────────┘
+
+# Colorize text (ANSI colors)
+error_msg = Terminal.colorize("Error", color="red", bold=True)
+success_msg = Terminal.colorize("Success", color="green")
+highlight = Terminal.colorize("Important", bg_color="yellow", underline=True)
+print(error_msg)  # Displays in red and bold
+
+# Progress bar
+progress = Terminal.progress_bar(50, 100)
+# "50%|█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░| 50/100"
+
+progress = Terminal.progress_bar(
+    current=75,
+    total=100,
+    prefix="Downloading:",
+    suffix="complete",
+    width=30,
+    fill="█",
+    empty="░"
+)
+print(progress)  # Displays progress bar with custom formatting
+```
+
+**Use cases:**
+- Interactive CLI applications
+- User input collection with validation
+- Configuration wizards
+- Installation scripts
+- Formatted terminal output
+- Progress indicators
+
 ### Beacon Utilities
 
 The `Beacon` class provides a global beacon for storing and retrieving application-wide values with optional TTL and statistics tracking:
@@ -1106,7 +1210,7 @@ For more information about templates, see [templates/README.md](templates/README
 ## Features
 
 - **Static Utility Classes**: Pure static methods with no inheritance - clean, functional API
-- **16 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Decorators, Logger, Encode, Decode, Session, Convert
+- **17 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Terminal, Decorators, Logger, Encode, Decode, Session, Convert
 - **String Utilities** (22 methods): Truncation, case conversions, slug generation, padding, validation (email/URL/blank), email/URL extraction, hashing
 - **Integer Utilities** (15 methods): Properties (even/odd/prime), clamping, conversions (roman/words), math operations, byte formatting, percentages
 - **Iterable Utilities** (22 methods): Chunking, flattening, filtering, grouping, partitioning, aggregations, sorting, finding items
@@ -1116,6 +1220,7 @@ For more information about templates, see [templates/README.md](templates/README
 - **Random Utilities** (14 methods): String/number generation, choices, shuffling, UUIDs, hash generation (md5, sha1, sha256, sha512, hex)
 - **Convert Utilities** (12 methods): Safe type conversion with fallbacks - to_bool, to_int, to_float, to_str, to_number, bytes_from_human, duration parsing, safe_cast, to_list, to_dict
 - **Validator Utilities** (14 methods): Email, URL, phone, UUID, credit card, hex color, IPv4, empty/numeric checks, geographic validation
+- **Terminal Utilities** (16 methods): Prompts (text, password, confirm, choice, select, multiline, int, float), formatting (clear, line, box, colorize, progress bar), custom validation
 - **Decorator Utilities** (5 methods): Debounce, throttle, retry with backoff, memoize, once
 - **Regex Utilities** (8 methods): Pattern matching, searching, replacing, splitting, group extraction, validation
 - **Logger Utilities**: Structured JSON logging with thread-local context, key normalization, log searching, custom type handling
@@ -1125,5 +1230,5 @@ For more information about templates, see [templates/README.md](templates/README
 - **Keyword-Only Arguments**: All parameters (except first) are keyword-only for clarity and safety
 - **Type Hints**: Complete type annotations for all methods
 - **Minimal Dependencies**: Only requests library required; optional dependencies include arrow for enhanced datetime parsing
-- **Comprehensive Tests**: 950+ tests covering all utilities, edge cases, and error conditions
+- **Comprehensive Tests**: 1020+ tests covering all utilities, edge cases, and error conditions
 

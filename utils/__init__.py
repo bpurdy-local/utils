@@ -20,6 +20,7 @@ from utils.random_utils import Random
 from utils.regex import Regex
 from utils.session import Session
 from utils.string import String
+from utils.terminal import Terminal
 from utils.validator import Validator
 
 __all__ = [
@@ -41,6 +42,7 @@ __all__ = [
     "Hash",
     "JSON",
     "Convert",
+    "Terminal",
     # Encoding/Decoding Classes
     "Encode",
     "Decode",

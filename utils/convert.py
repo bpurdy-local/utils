@@ -14,14 +14,10 @@ class Convert:
     _FALSE_VALUES = {"false", "no", "n", "0", "off", "f", "disabled", "disable"}
 
     # Duration pattern: "2h 30m 15s" or "2h30m15s" or combinations
-    _DURATION_PATTERN = re.compile(
-        r"(?:(\d+(?:\.\d+)?)\s*([dhms]))", re.IGNORECASE
-    )
+    _DURATION_PATTERN = re.compile(r"(?:(\d+(?:\.\d+)?)\s*([dhms]))", re.IGNORECASE)
 
     # Byte size pattern: "1.5GB", "500MB", "2KB", etc.
-    _BYTES_PATTERN = re.compile(
-        r"^(\d+(?:\.\d+)?)\s*([KMGT]?B)?$", re.IGNORECASE
-    )
+    _BYTES_PATTERN = re.compile(r"^(\d+(?:\.\d+)?)\s*([KMGT]?B)?$", re.IGNORECASE)
 
     @staticmethod
     def to_bool(value: Any, *, default: bool | None = None) -> bool | None:

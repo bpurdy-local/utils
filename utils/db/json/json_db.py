@@ -19,7 +19,6 @@ def Index() -> str:
 
 
 class JsonDB:
-
     def __init__(self, base_path: str | Path = "./data"):
         self.base_path = Path(base_path)
         self.base_path.mkdir(parents=True, exist_ok=True)

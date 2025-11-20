@@ -39,7 +39,9 @@ class Env:
             )
 
     @staticmethod
-    def get_float(key: str, *, default: float | None = None, required: bool = False) -> float | None:
+    def get_float(
+        key: str, *, default: float | None = None, required: bool = False
+    ) -> float | None:
         """Get environment variable as float.
 
         Example: Env.get_float("RATE_LIMIT", default=0.5)
@@ -216,6 +218,4 @@ class Env:
         missing = [key for key in keys if key not in os.environ]
 
         if missing:
-            raise ValueError(
-                f"Required environment variables are missing: {', '.join(missing)}"
-            )
+            raise ValueError(f"Required environment variables are missing: {', '.join(missing)}")

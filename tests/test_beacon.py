@@ -17,7 +17,6 @@ def clear_beacon():
 
 
 class TestBeaconBasicOperations:
-
     def test_register_and_get(self):
         Beacon.register("api_key", "secret123")
         value = Beacon.get("api_key")
@@ -82,7 +81,6 @@ class TestBeaconBasicOperations:
 
 
 class TestBeaconNamespaces:
-
     def test_register_with_namespace(self):
         Beacon.register("api_key", "secret", namespace="aws")
         value = Beacon.get("api_key", namespace="aws")
@@ -146,7 +144,6 @@ class TestBeaconNamespaces:
 
 
 class TestBeaconValueTypes:
-
     def test_store_string(self):
         Beacon.register("key", "string_value")
         assert Beacon.get("key") == "string_value"
@@ -187,7 +184,6 @@ class TestBeaconValueTypes:
 
 
 class TestBeaconEdgeCases:
-
     def test_empty_string_key(self):
         Beacon.register("", "value")
         assert Beacon.get("") == "value"
@@ -218,7 +214,6 @@ class TestBeaconEdgeCases:
 
 
 class TestBeaconThreadSafety:
-
     def test_concurrent_register(self):
         def register_values(start, count):
             for i in range(start, start + count):
@@ -281,7 +276,6 @@ class TestBeaconThreadSafety:
 
 
 class TestBeaconTTL:
-
     def test_register_with_ttl(self):
         Beacon.register("key", "value", ttl=timedelta(seconds=1))
         assert Beacon.get("key") == "value"
@@ -363,7 +357,6 @@ class TestBeaconTTL:
 
 
 class TestBeaconStatistics:
-
     def test_stats_tracking(self):
         Beacon.register("key", "value")
         Beacon.get("key")  # Hit

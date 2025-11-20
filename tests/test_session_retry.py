@@ -119,9 +119,7 @@ class TestJitterRetry:
 
     def test_custom_params(self):
         """Test with custom parameters."""
-        retry = JitterRetry(
-            attempts=5, delay=2.0, backoff=3.0, jitter_min=0.8, jitter_max=1.2
-        )
+        retry = JitterRetry(attempts=5, delay=2.0, backoff=3.0, jitter_min=0.8, jitter_max=1.2)
         assert retry.attempts == 5
         assert retry.delay == 2.0
         assert retry.backoff == 3.0
@@ -244,9 +242,7 @@ class TestDurationRetry:
 
     def test_custom_params(self):
         """Test with custom parameters."""
-        retry = DurationRetry(
-            duration=60.0, initial_delay=0.5, backoff=2.0, max_delay=10.0
-        )
+        retry = DurationRetry(duration=60.0, initial_delay=0.5, backoff=2.0, max_delay=10.0)
         assert retry.duration == 60.0
         assert retry.initial_delay == 0.5
         assert retry.backoff == 2.0
@@ -254,9 +250,7 @@ class TestDurationRetry:
 
     def test_delay_calculation(self):
         """Test exponential delay calculation with cap."""
-        retry = DurationRetry(
-            duration=60.0, initial_delay=1.0, backoff=2.0, max_delay=10.0
-        )
+        retry = DurationRetry(duration=60.0, initial_delay=1.0, backoff=2.0, max_delay=10.0)
         assert retry.get_delay(0) == 1.0  # 1.0 * 2^0
         assert retry.get_delay(1) == 2.0  # 1.0 * 2^1
         assert retry.get_delay(2) == 4.0  # 1.0 * 2^2

@@ -101,9 +101,7 @@ class Session(requests.Session):
         import re
 
         compiled_pattern = re.compile(pattern)
-        self._url_patterns.append(
-            {"pattern": compiled_pattern, "tag": tag, "retry": retry}
-        )
+        self._url_patterns.append({"pattern": compiled_pattern, "tag": tag, "retry": retry})
         self.metrics.setdefault(
             tag,
             {
@@ -514,9 +512,7 @@ class Session(requests.Session):
         executor = BatchExecutor(self)
         return executor.execute(*request_groups)
 
-    def stream_download(
-        self, url: str, *, output_path: str | Path, chunk_size: int = 8192
-    ) -> None:
+    def stream_download(self, url: str, *, output_path: str | Path, chunk_size: int = 8192) -> None:
         output_file = Path(output_path)
         output_file.parent.mkdir(parents=True, exist_ok=True)
 

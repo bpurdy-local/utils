@@ -7,7 +7,6 @@ from utils.hash import Hash
 
 
 class TestHashBasicOperations:
-
     def test_md5_string(self):
         result = Hash.md5("hello")
         assert result == "5d41402abc4b2a76b9719d911017c592"
@@ -35,7 +34,6 @@ class TestHashBasicOperations:
 
 
 class TestHashFileOperations:
-
     def test_hash_file_sha256(self):
         with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("test content")
@@ -101,7 +99,6 @@ class TestHashFileOperations:
 
 
 class TestHashVerification:
-
     def test_verify_matching_hash(self):
         data = "hello world"
         hash_value = Hash.sha256(data)
@@ -133,7 +130,6 @@ class TestHashVerification:
 
 
 class TestHashHMAC:
-
     def test_hmac_sha256(self):
         result = Hash.hmac_sha256("message", "secret_key")
         assert len(result) == 64  # SHA-256 produces 64 hex characters
@@ -175,7 +171,6 @@ class TestHashHMAC:
 
 
 class TestHashEdgeCases:
-
     def test_empty_string(self):
         result = Hash.sha256("")
         assert len(result) == 64

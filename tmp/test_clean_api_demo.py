@@ -18,9 +18,7 @@ def main():
     print("=== Clean JsonDB API ===\n")
 
     print("1. Save with explicit ID:")
-    user1 = User(
-        id="user-001", name="Alice", email="alice@example.com", created_at=datetime.now()
-    )
+    user1 = User(id="user-001", name="Alice", email="alice@example.com", created_at=datetime.now())
     key = db.save(user1)
     print(f"   Saved: {key}\n")
 

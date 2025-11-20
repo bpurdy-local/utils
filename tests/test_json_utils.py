@@ -4,7 +4,6 @@ from utils.json_utils import JSON
 
 
 class TestJSONPrettyMinify:
-
     def test_pretty_dict(self):
         data = {"a": 1, "b": 2}
         result = JSON.pretty(data)
@@ -42,7 +41,6 @@ class TestJSONPrettyMinify:
 
 
 class TestJSONFlatten:
-
     def test_flatten_simple(self):
         data = {"a": {"b": 1, "c": 2}}
         result = JSON.flatten(data)
@@ -84,7 +82,6 @@ class TestJSONFlatten:
 
 
 class TestJSONUnflatten:
-
     def test_unflatten_simple(self):
         data = {"a.b": 1, "a.c": 2}
         result = JSON.unflatten(data)
@@ -117,7 +114,6 @@ class TestJSONUnflatten:
 
 
 class TestJSONParse:
-
     def test_parse_valid_json(self):
         result = JSON.parse('{"a": 1}')
         assert result == {"a": 1}
@@ -135,15 +131,15 @@ class TestJSONParse:
         assert result == []
 
     def test_parse_list(self):
-        result = JSON.parse('[1, 2, 3]')
+        result = JSON.parse("[1, 2, 3]")
         assert result == [1, 2, 3]
 
     def test_parse_null(self):
-        result = JSON.parse('null')
+        result = JSON.parse("null")
         assert result is None
 
     def test_parse_number(self):
-        result = JSON.parse('42')
+        result = JSON.parse("42")
         assert result == 42
 
     def test_parse_string(self):
@@ -152,7 +148,6 @@ class TestJSONParse:
 
 
 class TestJSONValidateSchema:
-
     def test_validate_simple_schema(self):
         schema = {"name": str, "age": int}
         data = {"name": "John", "age": 30}
@@ -195,7 +190,6 @@ class TestJSONValidateSchema:
 
 
 class TestJSONToFromString:
-
     def test_to_string(self):
         data = {"a": 1}
         result = JSON.to_string(data)
@@ -224,31 +218,29 @@ class TestJSONToFromString:
 
 
 class TestJSONIsValid:
-
     def test_is_valid_true(self):
         assert JSON.is_valid('{"a": 1}') is True
 
     def test_is_valid_false(self):
-        assert JSON.is_valid('invalid') is False
+        assert JSON.is_valid("invalid") is False
 
     def test_is_valid_list(self):
-        assert JSON.is_valid('[1, 2, 3]') is True
+        assert JSON.is_valid("[1, 2, 3]") is True
 
     def test_is_valid_string(self):
         assert JSON.is_valid('"hello"') is True
 
     def test_is_valid_number(self):
-        assert JSON.is_valid('42') is True
+        assert JSON.is_valid("42") is True
 
     def test_is_valid_null(self):
-        assert JSON.is_valid('null') is True
+        assert JSON.is_valid("null") is True
 
     def test_is_valid_malformed(self):
         assert JSON.is_valid('{"a": }') is False
 
 
 class TestJSONEdgeCases:
-
     def test_unicode_characters(self):
         data = {"text": "日本語"}
         json_str = JSON.to_string(data)

@@ -76,7 +76,9 @@ class Beacon:
             Beacon._storage[full_key] = (value, expiry)
 
     @staticmethod
-    def get(key: str, *, namespace: str | None = None, default: Any = None, required: bool = False) -> Any:
+    def get(
+        key: str, *, namespace: str | None = None, default: Any = None, required: bool = False
+    ) -> Any:
         """Get a value from the beacon, returning default if not found or expired.
 
         Examples:
@@ -217,7 +219,7 @@ class Beacon:
 
         with Beacon._lock:
             return {
-                key[len(prefix):]: value
+                key[len(prefix) :]: value
                 for key, (value, expiry) in Beacon._storage.items()
                 if key.startswith(prefix) and (expiry is None or current_time <= expiry)
             }

@@ -11,6 +11,7 @@ This is a Python utility library that provides static utility classes for common
 - **Path**, **FileIO** - Filesystem operations
 - **Regex**, **Validator** - Pattern matching and validation
 - **Random** - Random generation utilities
+- **Terminal** - Terminal input/prompts (text, password, confirm, choice, select, multiline, int/float, validation) and formatting (clear, line, box, colorize, progress bar)
 - **Decorators** - Function decorators (debounce, throttle, retry, memoize, once)
 - **Logger** - Structured JSON logging with persistent context
 - **Encode**, **Decode** - Encoding/decoding operations (base64, URL, HTML, fang/defang)

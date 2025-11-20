@@ -115,4 +115,6 @@ class TestStreamDownload:
 
             session = Session()
             with pytest.raises(requests.HTTPError):
-                session.stream_download("https://example.com/missing.txt", output_path=str(output_path))
+                session.stream_download(
+                    "https://example.com/missing.txt", output_path=str(output_path)
+                )
