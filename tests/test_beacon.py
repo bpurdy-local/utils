@@ -1,5 +1,6 @@
 import threading
 import time
+from datetime import timedelta
 
 import pytest
 
@@ -9,8 +10,10 @@ from utils.beacon import Beacon
 @pytest.fixture(autouse=True)
 def clear_beacon():
     Beacon.clear()
+    Beacon.reset_stats()
     yield
     Beacon.clear()
+    Beacon.reset_stats()
 
 
 class TestBeaconBasicOperations:
@@ -275,3 +278,123 @@ class TestBeaconThreadSafety:
 
         assert len(ns1_values) == 50
         assert len(ns2_values) == 50
+
+
+class TestBeaconTTL:
+
+    def test_register_with_ttl(self):
+        Beacon.register("key", "value", ttl=timedelta(seconds=1))
+        assert Beacon.get("key") == "value"
+
+    def test_expired_key_returns_default(self):
+        Beacon.register("key", "value", ttl=timedelta(seconds=1))
+        time.sleep(1.1)
+        assert Beacon.get("key") is None
+
+    def test_expired_key_has_returns_false(self):
+        Beacon.register("key", "value", ttl=timedelta(seconds=1))
+        time.sleep(1.1)
+        assert Beacon.has("key") is False
+
+    def test_clear_expired(self):
+        Beacon.register("key1", "value1", ttl=timedelta(seconds=1))
+        Beacon.register("key2", "value2")  # No TTL
+        time.sleep(1.1)
+        count = Beacon.clear_expired()
+        assert count == 1
+        assert Beacon.has("key1") is False
+        assert Beacon.has("key2") is True
+
+    def test_zero_ttl_expires_immediately(self):
+        Beacon.register("key", "value", ttl=timedelta(seconds=0))
+        assert Beacon.get("key") is None
+
+    def test_negative_ttl_expires_immediately(self):
+        Beacon.register("key", "value", ttl=timedelta(seconds=-1))
+        assert Beacon.get("key") is None
+
+    def test_ttl_with_namespace(self):
+        Beacon.register("key", "value", namespace="ns", ttl=timedelta(seconds=1))
+        assert Beacon.get("key", namespace="ns") == "value"
+        time.sleep(1.1)
+        assert Beacon.get("key", namespace="ns") is None
+
+    def test_list_keys_excludes_expired(self):
+        Beacon.register("key1", "value1", ttl=timedelta(seconds=1))
+        Beacon.register("key2", "value2")
+        time.sleep(1.1)
+        keys = Beacon.list_keys()
+        assert "key1" not in keys
+        assert "key2" in keys
+
+    def test_get_namespace_excludes_expired(self):
+        Beacon.register("key1", "value1", namespace="ns", ttl=timedelta(seconds=1))
+        Beacon.register("key2", "value2", namespace="ns")
+        time.sleep(1.1)
+        values = Beacon.get_namespace("ns")
+        assert "key1" not in values
+        assert "key2" in values
+
+    def test_ttl_with_timedelta_seconds(self):
+        Beacon.register("key", "value", ttl=timedelta(seconds=1))
+        assert Beacon.get("key") == "value"
+        time.sleep(1.1)
+        assert Beacon.get("key") is None
+
+    def test_ttl_with_timedelta_minutes(self):
+        # Short duration for testing
+        Beacon.register("key", "value", ttl=timedelta(seconds=0.5))
+        assert Beacon.get("key") == "value"
+        time.sleep(0.6)
+        assert Beacon.get("key") is None
+
+    def test_ttl_with_timedelta_hours(self):
+        # Use a very short timedelta for testing purposes
+        Beacon.register("key", "value", ttl=timedelta(milliseconds=500))
+        assert Beacon.get("key") == "value"
+        time.sleep(0.6)
+        assert Beacon.get("key") is None
+
+    def test_ttl_timedelta_with_namespace(self):
+        Beacon.register("key", "value", namespace="ns", ttl=timedelta(seconds=1))
+        assert Beacon.get("key", namespace="ns") == "value"
+        time.sleep(1.1)
+        assert Beacon.get("key", namespace="ns") is None
+
+
+class TestBeaconStatistics:
+
+    def test_stats_tracking(self):
+        Beacon.register("key", "value")
+        Beacon.get("key")  # Hit
+        Beacon.get("missing")  # Miss
+
+        stats = Beacon.stats()
+        assert stats["hits"] == 1
+        assert stats["misses"] == 1
+        assert stats["size"] == 1
+
+    def test_reset_stats(self):
+        Beacon.register("key", "value")
+        Beacon.get("key")
+        Beacon.reset_stats()
+
+        stats = Beacon.stats()
+        assert stats["hits"] == 0
+        assert stats["misses"] == 0
+
+    def test_expired_counts_as_miss(self):
+        Beacon.register("key", "value", ttl=timedelta(seconds=1))
+        time.sleep(1.1)
+        Beacon.get("key")
+
+        stats = Beacon.stats()
+        assert stats["misses"] == 1
+
+    def test_has_does_not_affect_stats(self):
+        Beacon.register("key", "value")
+        Beacon.has("key")
+
+        stats = Beacon.stats()
+        assert stats["hits"] == 0
+        assert stats["misses"] == 0

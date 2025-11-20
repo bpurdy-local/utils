@@ -409,50 +409,250 @@ Validator.is_coordinates(40.7128, -74.0060)  # True (valid lat/lon pair)
 
 ### Beacon Utilities
 
-The `Beacon` class provides a global beacon for storing and retrieving application-wide values:
+The `Beacon` class provides a global beacon for storing and retrieving application-wide values with optional TTL and statistics tracking:
 
 ```python
 from utils import Beacon
+from datetime import timedelta
 
-# Register values globally
+# Register values globally (permanent by default)
 Beacon.register("api_key", "secret123")
 Beacon.register("timeout", 30)
+
+# Register with TTL (time-to-live) for temporary values
+# Can use int (seconds) or timedelta for better readability
+Beacon.register("temp_token", "xyz", ttl=300)  # 300 seconds (5 minutes)
+Beacon.register("cache_data", {"result": 42}, ttl=60)  # 60 seconds
+
+# Or use timedelta for better readability with longer durations
+Beacon.register("session", session_data, ttl=timedelta(hours=1))
+Beacon.register("temp_cache", data, ttl=timedelta(minutes=30))
+Beacon.register("quick_cache", result, ttl=timedelta(days=7))
 
 # Retrieve from anywhere in your code
 api_key = Beacon.get("api_key")  # "secret123"
 timeout = Beacon.get("timeout", default=60)  # 30
+temp_token = Beacon.get("temp_token")  # "xyz" (or None if expired)
 
-# Check existence
+# Check existence (automatically filters expired values)
 if Beacon.has("api_key"):
     print("API key is configured")
 
 # Organize with namespaces
 Beacon.register("bucket", "my-bucket", namespace="aws")
 Beacon.register("project", "my-project", namespace="gcp")
+Beacon.register("session_id", "abc123", namespace="user", ttl=1800)  # 30 min TTL
 
 bucket = Beacon.get("bucket", namespace="aws")  # "my-bucket"
 project = Beacon.get("project", namespace="gcp")  # "my-project"
 
-# Get all values in a namespace
+# Get all non-expired values in a namespace
 aws_config = Beacon.get_namespace("aws")  # {"bucket": "my-bucket"}
 
-# List keys
-keys = Beacon.list_keys()  # All keys
+# List non-expired keys
+keys = Beacon.list_keys()  # All non-expired keys
 aws_keys = Beacon.list_keys(namespace="aws")  # Keys in namespace
 
-# Clear values
+# Clear operations
 Beacon.unregister("api_key")  # Remove one key
 Beacon.clear_namespace("aws")  # Remove all AWS keys
+Beacon.clear_expired()  # Remove only expired entries
 Beacon.clear()  # Remove everything
+
+# Statistics tracking (useful for cache-like usage)
+stats = Beacon.stats()  # {"hits": 10, "misses": 3, "size": 5}
+Beacon.reset_stats()
 ```
 
+**Automatic cleanup:** Expired entries are automatically removed when accessed via `get()` or `has()`, and when new values are registered via `register()`. Manual cleanup using `clear_expired()` is optional.
+
 **Use cases:**
-- Store application configuration that doesn't change at runtime
+- Store permanent application configuration (no TTL)
+- Cache expensive API responses (with TTL)
 - Share service instances across modules without passing parameters
 - Store feature flags or environment-specific settings
+- Temporary session data with automatic expiration
 - Access constants from anywhere without imports
 
 **Note:** Use sparingly for truly global values. Overuse can make code harder to test and understand.
+
+### Hash Utilities
+
+The `Hash` class provides hashing utilities for data integrity and security:
+
+```python
+from utils import Hash
+
+# Generate hashes (string or bytes input)
+Hash.md5("hello")  # "5d41402abc4b2a76b9719d911017c592"
+Hash.sha1("hello")  # SHA-1 hash
+Hash.sha256("hello")  # SHA-256 hash (recommended for security)
+Hash.sha512("hello")  # SHA-512 hash
+
+# Hash files
+hash_value = Hash.file("document.pdf")  # SHA-256 by default
+hash_value = Hash.file("large_file.zip", algorithm="md5")
+
+# Verify hashes
+data = "important data"
+hash_val = Hash.sha256(data)
+is_valid = Hash.verify(data, hash_val)  # True
+
+# HMAC for authenticated hashing
+message = "secure message"
+key = "secret_key"
+hmac_hash = Hash.hmac_sha256(message, key)
+is_valid = Hash.hmac_verify(message, key, hmac_hash)  # True
+
+# Quick checksums for integrity
+checksum = Hash.checksum("data")  # MD5 hash for quick integrity checks
+```
+
+**Use cases:**
+- Verify file integrity
+- Generate secure hashes for passwords (use with salt)
+- HMAC for message authentication
+- Checksums for data validation
+
+**Note:** MD5 and SHA-1 are not cryptographically secure for new applications. Use SHA-256 or SHA-512 for security-sensitive operations.
+
+### JSON Utilities
+
+The `JSON` class provides advanced JSON operations:
+
+```python
+from utils import JSON
+
+# Pretty printing
+data = {"name": "John", "age": 30, "city": "NYC"}
+print(JSON.pretty(data))
+# {
+#   "name": "John",
+#   "age": 30,
+#   "city": "NYC"
+# }
+
+print(JSON.pretty(data, indent=4))  # Custom indentation
+
+# Minify JSON
+json_str = '{"name": "John", "age": 30}'
+minified = JSON.minify(json_str)  # '{"name":"John","age":30}'
+
+# Flatten nested structures
+nested = {"user": {"profile": {"name": "John", "age": 30}}}
+flat = JSON.flatten(nested)
+# {"user.profile.name": "John", "user.profile.age": 30}
+
+# Unflatten back to nested
+original = JSON.unflatten(flat)
+# {"user": {"profile": {"name": "John", "age": 30}}}
+
+# Custom separator
+flat = JSON.flatten(nested, separator="_")
+# {"user_profile_name": "John", "user_profile_age": 30}
+
+# Safe parsing (no exceptions)
+result = JSON.parse('{"valid": "json"}')  # {"valid": "json"}
+result = JSON.parse('invalid json', default={})  # {}
+
+# Validate JSON
+JSON.is_valid('{"name": "John"}')  # True
+JSON.is_valid('invalid')  # False
+
+# Basic schema validation
+schema = {"name": str, "age": int}
+data = {"name": "John", "age": 30}
+JSON.validate_schema(data, schema)  # True
+
+# Conversion helpers
+json_str = JSON.to_string(data)  # Convert to JSON string
+data = JSON.from_string(json_str)  # Parse from JSON string
+```
+
+**Use cases:**
+- Format JSON for display or logging
+- Flatten nested API responses for analysis
+- Safe JSON parsing without exception handling
+- Basic data validation
+
+### Convert Utilities
+
+The `Convert` class provides type conversion and parsing with safe fallbacks:
+
+```python
+from utils import Convert
+
+# Boolean conversion (handles true/false, yes/no, 1/0, on/off, enabled/disabled)
+Convert.to_bool("true")  # True
+Convert.to_bool("yes")  # True
+Convert.to_bool("1")  # True
+Convert.to_bool("off")  # False
+Convert.to_bool("invalid", default=False)  # False
+
+# Integer conversion (handles commas, decimals, strings)
+Convert.to_int("123")  # 123
+Convert.to_int("1,234")  # 1234
+Convert.to_int("1,234.56")  # 1234 (truncates decimal)
+Convert.to_int(12.8)  # 12
+Convert.to_int("invalid", default=0)  # 0
+
+# Float conversion (handles commas, strings)
+Convert.to_float("123.45")  # 123.45
+Convert.to_float("1,234.56")  # 1234.56
+Convert.to_float(123)  # 123.0
+Convert.to_float("invalid", default=0.0)  # 0.0
+
+# Smart number conversion (int if possible, otherwise float)
+Convert.to_number("123")  # 123 (int)
+Convert.to_number("123.45")  # 123.45 (float)
+Convert.to_number("1,234")  # 1234 (int)
+Convert.to_number("123.0")  # 123 (int, not float)
+
+# String conversion with safe None handling
+Convert.to_str(123)  # "123"
+Convert.to_str(None)  # ""
+Convert.to_str(None, default="N/A")  # "N/A"
+
+# Human-readable bytes to integer
+Convert.bytes_from_human("1KB")  # 1024
+Convert.bytes_from_human("1.5GB")  # 1610612736
+Convert.bytes_from_human("500MB")  # 524288000
+Convert.bytes_from_human("2 TB")  # 2199023255552
+
+# Duration strings to seconds
+Convert.duration("2h")  # 7200
+Convert.duration("30m")  # 1800
+Convert.duration("2h 30m")  # 9000
+Convert.duration("1d 2h 30m 15s")  # 95415
+Convert.duration("2.5h")  # 9000
+
+# Safe type casting with fallback
+Convert.safe_cast("123", int)  # 123
+Convert.safe_cast("123.45", float)  # 123.45
+Convert.safe_cast("invalid", int, default=0)  # 0
+Convert.safe_cast("true", bool)  # True
+
+# List conversion (splits strings, wraps single values)
+Convert.to_list("a,b,c")  # ["a", "b", "c"]
+Convert.to_list("a, b, c")  # ["a", "b", "c"] (strips whitespace)
+Convert.to_list("a")  # ["a"]
+Convert.to_list([1, 2, 3])  # [1, 2, 3] (unchanged)
+Convert.to_list((1, 2, 3))  # [1, 2, 3] (tuple to list)
+Convert.to_list("a;b;c", separator=";")  # ["a", "b", "c"]
+
+# Dict conversion
+Convert.to_dict({"a": 1})  # {"a": 1}
+Convert.to_dict([("a", 1), ("b", 2)])  # {"a": 1, "b": 2}
+Convert.to_dict(None, default={})  # {}
+```
+
+**Use cases:**
+- Parse user input or configuration values safely
+- Handle environment variables with type conversion
+- Parse API responses with mixed types
+- Convert human-readable sizes (1.5GB) to bytes
+- Parse duration strings (2h 30m) for timeouts/delays
+- Safe type coercion without exceptions
 
 ### Decorator Utilities
 
@@ -906,14 +1106,15 @@ For more information about templates, see [templates/README.md](templates/README
 ## Features
 
 - **Static Utility Classes**: Pure static methods with no inheritance - clean, functional API
-- **15 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Decorators, Logger, Encode, Decode, Session
+- **16 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Decorators, Logger, Encode, Decode, Session, Convert
 - **String Utilities** (22 methods): Truncation, case conversions, slug generation, padding, validation (email/URL/blank), email/URL extraction, hashing
 - **Integer Utilities** (15 methods): Properties (even/odd/prime), clamping, conversions (roman/words), math operations, byte formatting, percentages
 - **Iterable Utilities** (22 methods): Chunking, flattening, filtering, grouping, partitioning, aggregations, sorting, finding items
 - **Dict Utilities** (18 methods): Pick/omit keys, deep get/set, merging, transformations, key case conversions, flattening/unflattening
 - **Datetime Utilities** (28 methods): Parsing, formatting, relative time, day/week/month/year boundaries, date arithmetic
 - **Path Utilities** (12 methods): File I/O for text/lines/JSON, file management (copy/move/delete), path operations, existence checks
-- **Random Utilities** (9 methods): String/number generation, choices, shuffling, UUIDs
+- **Random Utilities** (14 methods): String/number generation, choices, shuffling, UUIDs, hash generation (md5, sha1, sha256, sha512, hex)
+- **Convert Utilities** (12 methods): Safe type conversion with fallbacks - to_bool, to_int, to_float, to_str, to_number, bytes_from_human, duration parsing, safe_cast, to_list, to_dict
 - **Validator Utilities** (14 methods): Email, URL, phone, UUID, credit card, hex color, IPv4, empty/numeric checks, geographic validation
 - **Decorator Utilities** (5 methods): Debounce, throttle, retry with backoff, memoize, once
 - **Regex Utilities** (8 methods): Pattern matching, searching, replacing, splitting, group extraction, validation
@@ -924,5 +1125,5 @@ For more information about templates, see [templates/README.md](templates/README
 - **Keyword-Only Arguments**: All parameters (except first) are keyword-only for clarity and safety
 - **Type Hints**: Complete type annotations for all methods
 - **Minimal Dependencies**: Only requests library required; optional dependencies include arrow for enhanced datetime parsing
-- **Comprehensive Tests**: 481 tests covering all utilities, edge cases, and error conditions
+- **Comprehensive Tests**: 950+ tests covering all utilities, edge cases, and error conditions
 

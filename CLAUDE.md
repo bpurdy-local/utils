@@ -17,6 +17,9 @@ This is a Python utility library that provides static utility classes for common
 - **Session** - Enhanced HTTP session with auto-timeout and dict-based auth (inherits from requests.Session)
 - **JsonDB** - File system-based JSON database for Pydantic BaseModel instances
 - **Env** - Environment variable utilities with type conversion and .env file loading
+- **Beacon** - Global beacon for storing and retrieving application-wide values with optional TTL and statistics
+- **Hash** - Hashing utilities for data integrity and security (MD5, SHA-256, SHA-512, HMAC)
+- **JSON** - Advanced JSON operations (pretty/minify, flatten/unflatten, safe parsing)
 
 All utility classes use static methods that accept the value to operate on as the first positional parameter, followed by keyword-only arguments (enforced with the `*` separator). This design provides clear, consistent APIs without the overhead of instantiation or inheritance.
 
@@ -66,7 +69,7 @@ pytest -m "not slow"
 pytest -v
 ```
 
-The test suite has 612 tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
+The test suite has 950+ tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
 
 ## Code Quality
 
@@ -121,10 +124,13 @@ Each utility class lives in its own module under `utils/`:
 - `validator.py` - Validator utility class (14 methods: email, URL, phone, credit card, UUID, geographic validators)
 
 **Utilities:**
-- `random_utils.py` - Random utility class (9 methods: string/number generation, choices, UUIDs)
+- `random_utils.py` - Random utility class (14 methods: string/number generation, choices, UUIDs, hex, md5, sha1, sha256, sha512)
 - `decorators.py` - Decorators utility class (5 methods: debounce, throttle, retry, memoize, once)
 - `env.py` - Env utility class (15 methods: get/get_int/get_float/get_bool/get_list/get_path, set/unset/has, load_dotenv, to_dict, clear, get_with_prefix, require)
-- `beacon.py` - Beacon utility class (10 methods: register, get with defaults/required, has, unregister, clear, list_keys, get_namespace, clear_namespace)
+- `beacon.py` - Beacon utility class (13 methods: register with TTL (int or timedelta), get with defaults/required, has, unregister, clear, clear_expired, list_keys, get_namespace, clear_namespace, stats, reset_stats)
+- `hash.py` - Hash utility class (10 methods: md5, sha1, sha256, sha512, file hashing, verify, hmac_sha256, hmac_verify, checksum)
+- `json_utils.py` - JSON utility class (10 methods: pretty, minify, flatten, unflatten, parse, validate_schema, to_string, from_string, is_valid)
+- `convert.py` - Convert utility class (12 methods: to_bool, to_int, to_float, to_str, to_number, bytes_from_human, duration, safe_cast, to_list, to_dict)
 
 **Logging & Encoding:**
 - `logger.py` - Logger utility class with structured JSON logging and persistent context

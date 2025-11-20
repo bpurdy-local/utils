@@ -1,3 +1,4 @@
+import hashlib
 import random
 import secrets
 import string
@@ -125,3 +126,64 @@ class Random:
             4
         """
         return Random.uuid4()
+
+    @staticmethod
+    def hex(*, length: int = 32) -> str:
+        """Generate random hexadecimal string.
+
+        Examples:
+            >>> result = Random.hex(length=32)
+            >>> len(result)
+            32
+            >>> all(c in '0123456789abcdef' for c in result)
+            True
+        """
+        return secrets.token_hex(length // 2)
+
+    @staticmethod
+    def md5() -> str:
+        """Generate random MD5 hash.
+
+        Examples:
+            >>> result = Random.md5()
+            >>> len(result)
+            32
+        """
+        random_bytes = secrets.token_bytes(16)
+        return hashlib.md5(random_bytes).hexdigest()
+
+    @staticmethod
+    def sha1() -> str:
+        """Generate random SHA-1 hash.
+
+        Examples:
+            >>> result = Random.sha1()
+            >>> len(result)
+            40
+        """
+        random_bytes = secrets.token_bytes(20)
+        return hashlib.sha1(random_bytes).hexdigest()
+
+    @staticmethod
+    def sha256() -> str:
+        """Generate random SHA-256 hash.
+
+        Examples:
+            >>> result = Random.sha256()
+            >>> len(result)
+            64
+        """
+        random_bytes = secrets.token_bytes(32)
+        return hashlib.sha256(random_bytes).hexdigest()
+
+    @staticmethod
+    def sha512() -> str:
+        """Generate random SHA-512 hash.
+
+        Examples:
+            >>> result = Random.sha512()
+            >>> len(result)
+            128
+        """
+        random_bytes = secrets.token_bytes(64)
+        return hashlib.sha512(random_bytes).hexdigest()
