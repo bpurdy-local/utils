@@ -28,11 +28,18 @@ class Terminal:
             User input string or default value
 
         Examples:
-            >>> Terminal.prompt("Enter your name: ")
+            >>> Terminal.prompt("Enter your name")
+            # Terminal: Enter your name: █
             'John'
-            >>> Terminal.prompt("Enter port: ", default="8080")
+
+            >>> Terminal.prompt("Enter port", default="8080")
+            # Terminal: Enter port [8080]: █
             '8080'
-            >>> Terminal.prompt("Enter email: ", validator=lambda x: (("@" in x), "Must contain @"))
+
+            >>> Terminal.prompt("Enter email", validator=lambda x: (("@" in x), "Must contain @"))
+            # Terminal: Enter email: invalid
+            #           Must contain @
+            #           Enter email: user@example.com
             'user@example.com'
         """
         prompt_msg = f"{message} [{default}]: " if default is not None else f"{message}: "
@@ -71,8 +78,11 @@ class Terminal:
 
         Examples:
             >>> Terminal.confirm("Continue?")
+            # Terminal: Continue? [y/n]: y
             True
+
             >>> Terminal.confirm("Delete file?", default=False)
+            # Terminal: Delete file? [y/N]: █
             False
         """
         suffix = ""
@@ -108,8 +118,11 @@ class Terminal:
 
         Examples:
             >>> Terminal.password()
+            # Terminal: Password: ******** (hidden input)
             'secret123'
+
             >>> Terminal.password("Enter API key")
+            # Terminal: Enter API key: ******** (hidden input)
             'abc123xyz'
         """
         return getpass.getpass(f"{message}: ")
@@ -137,9 +150,12 @@ class Terminal:
             ValueError: If choices list is empty or default not in choices
 
         Examples:
-            >>> Terminal.choice("Select env:", choices=["dev", "prod"])
+            >>> Terminal.choice("Select env", choices=["dev", "prod"])
+            # Terminal: Select env (dev, prod): dev
             'dev'
+
             >>> Terminal.choice("Color?", choices=["red", "blue"], default="red")
+            # Terminal: Color? (red, blue) [red]: █
             'red'
         """
         if not choices:
@@ -190,8 +206,17 @@ class Terminal:
 
         Examples:
             >>> Terminal.select("Choose:", options=["Apple", "Banana"])
+            # Terminal: Choose:
+            #             1. Apple
+            #             2. Banana
+            #           Select (number): 1
             (0, 'Apple')
+
             >>> Terminal.select("Pick:", options=["A", "B"], default_index=1)
+            # Terminal: Pick:
+            #             1. A
+            #             2. B (default)
+            #           Select (number) [2]: █
             (1, 'B')
         """
         if not options:
@@ -238,8 +263,18 @@ class Terminal:
 
         Examples:
             >>> Terminal.multiline("Enter text:")
+            # Terminal: Enter text: (end with 'empty line')
+            #           line1
+            #           line2
+            #           line3
+            #
             'line1\\nline2\\nline3'
+
             >>> Terminal.multiline("SQL query:", terminator="GO")
+            # Terminal: SQL query: (end with 'GO')
+            #           SELECT *
+            #           FROM users
+            #           GO
             'SELECT *\\nFROM users'
         """
         print(f"{message} (end with '{terminator or 'empty line'}')")
@@ -276,9 +311,12 @@ class Terminal:
             ValueError: If min_val > max_val
 
         Examples:
-            >>> Terminal.prompt_int("Enter age:")
+            >>> Terminal.prompt_int("Enter age", min_val=0, max_val=120)
+            # Terminal: Enter age (0-120): 25
             25
-            >>> Terminal.prompt_int("Port:", default=8080, min_val=1, max_val=65535)
+
+            >>> Terminal.prompt_int("Port", default=8080, min_val=1, max_val=65535)
+            # Terminal: Port [8080] (1-65535): █
             8080
         """
         if min_val is not None and max_val is not None and min_val > max_val:
@@ -339,9 +377,12 @@ class Terminal:
             ValueError: If min_val > max_val
 
         Examples:
-            >>> Terminal.prompt_float("Enter price:")
+            >>> Terminal.prompt_float("Enter price")
+            # Terminal: Enter price: 19.99
             19.99
-            >>> Terminal.prompt_float("Rate:", default=0.5, min_val=0.0, max_val=1.0)
+
+            >>> Terminal.prompt_float("Rate", default=0.5, min_val=0.0, max_val=1.0)
+            # Terminal: Rate [0.5] (0.0-1.0): █
             0.75
         """
         if min_val is not None and max_val is not None and min_val > max_val:
@@ -417,7 +458,20 @@ class Terminal:
 
         Examples:
             >>> Terminal.print_box("Hello World")
+            # Terminal: ┌─────────────┐
+            #           │             │
+            #           │ Hello World │
+            #           │             │
+            #           └─────────────┘
+
             >>> Terminal.print_box("Status: OK", width=30, padding=2)
+            # Terminal: ┌────────────────────────────┐
+            #           │                            │
+            #           │                            │
+            #           │  Status: OK                │
+            #           │                            │
+            #           │                            │
+            #           └────────────────────────────┘
         """
         lines = text.split("\n")
         max_len = max(len(line) for line in lines) if lines else 0
@@ -474,8 +528,11 @@ class Terminal:
 
         Examples:
             >>> Terminal.colorize("Error", color="red", bold=True)
+            # Terminal: Error (displayed in bold red text)
             '\\033[1;31mError\\033[0m'
+
             >>> Terminal.colorize("Success", color="green")
+            # Terminal: Success (displayed in green text)
             '\\033[32mSuccess\\033[0m'
         """
         colors = {
@@ -546,8 +603,11 @@ class Terminal:
 
         Examples:
             >>> Terminal.progress_bar(50, 100)
+            # Terminal: 50%|█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░| 50/100
             '50%|█████████████████████████░░░░░░░░░░░░░░░░░░░░░░░░░| 50/100'
+
             >>> Terminal.progress_bar(3, 10, prefix="Downloading:", width=20)
+            # Terminal: Downloading: 30%|██████░░░░░░░░░░░░░░| 3/10
             'Downloading: 30%|██████░░░░░░░░░░░░░░| 3/10'
         """
         percent = 100.0 if total == 0 else min(100.0, (current / total) * 100)
@@ -578,9 +638,16 @@ class Terminal:
             Validated input string
 
         Examples:
-            >>> Terminal.validate_input("Email:", validator=lambda x: "@" in x)
+            >>> Terminal.validate_input("Email", validator=lambda x: "@" in x)
+            # Terminal: Email: invalid
+            #           Invalid input. Please try again.
+            #           Email: user@example.com
             'user@example.com'
-            >>> Terminal.validate_input("Code:", validator=lambda x: x.isdigit())
+
+            >>> Terminal.validate_input("Code", validator=lambda x: x.isdigit())
+            # Terminal: Code: abc
+            #           Invalid input. Please try again.
+            #           Code: 12345
             '12345'
         """
         # Wrap the simple bool validator into the tuple format expected by prompt()

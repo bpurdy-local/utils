@@ -415,48 +415,73 @@ The `Terminal` class provides static methods for terminal input, prompts, and fo
 from utils import Terminal
 
 # Basic text input
-name = Terminal.prompt("Enter your name")  # User types: John
-port = Terminal.prompt("Enter port", default="8080")  # Press Enter for default
+name = Terminal.prompt("Enter your name")
+# Terminal: Enter your name: █
+
+port = Terminal.prompt("Enter port", default="8080")
+# Terminal: Enter port [8080]: █
 
 # Prompt with custom validator (returns tuple: (is_valid, error_message))
 email = Terminal.prompt(
     "Enter email",
     validator=lambda x: ((True, None) if "@" in x else (False, "Must contain @"))
 )
+# Terminal: Enter email: invalid
+#           Must contain @
+#           Enter email: user@example.com
 
 # Yes/no confirmation
 if Terminal.confirm("Delete file?"):
     print("Deleting...")
-if Terminal.confirm("Continue?", default=True):  # [Y/n] format
+# Terminal: Delete file? [y/n]: y
+
+if Terminal.confirm("Continue?", default=True):
     print("Continuing...")
+# Terminal: Continue? [Y/n]: █  (pressing Enter uses default)
 
 # Password input (hidden)
-password = Terminal.password()  # Default message
+password = Terminal.password()
+# Terminal: Password: ******** (hidden input)
+
 api_key = Terminal.password("Enter API key")
+# Terminal: Enter API key: ******** (hidden input)
 
 # Multiple choice selection
 env = Terminal.choice("Select environment", choices=["dev", "staging", "prod"])
+# Terminal: Select environment (dev, staging, prod): staging
+
 env = Terminal.choice("Select env", choices=["dev", "prod"], default="dev")
+# Terminal: Select env (dev, prod) [dev]: █
 
 # Numbered selection
 idx, option = Terminal.select("Choose option", options=["Apple", "Banana", "Cherry"])
-# Displays:
-# Choose option:
-#   1. Apple
-#   2. Banana
-#   3. Cherry
+# Terminal: Choose option:
+#             1. Apple
+#             2. Banana
+#             3. Cherry
+#           Select (number): 2
 
 # Multi-line input
 sql = Terminal.multiline("Enter SQL query", terminator="GO")
-# User types multiple lines, ends with "GO"
+# Terminal: Enter SQL query (end with 'GO')
+#           SELECT *
+#           FROM users
+#           WHERE active = true
+#           GO
 
 # Integer input with validation
 age = Terminal.prompt_int("Enter age", min_val=0, max_val=120)
+# Terminal: Enter age (0-120): 25
+
 port = Terminal.prompt_int("Port", default=8080, min_val=1, max_val=65535)
+# Terminal: Port [8080] (1-65535): █
 
 # Float input with validation
 rate = Terminal.prompt_float("Enter rate", min_val=0.0, max_val=1.0)
+# Terminal: Enter rate (0.0-1.0): 0.75
+
 price = Terminal.prompt_float("Price", default=9.99)
+# Terminal: Price [9.99]: █
 
 # Custom validation
 email = Terminal.validate_input(
@@ -464,6 +489,9 @@ email = Terminal.validate_input(
     validator=lambda x: "@" in x,
     error_message="Must be a valid email"
 )
+# Terminal: Enter email: invalid
+#           Must be a valid email
+#           Enter email: user@example.com
 
 # Terminal formatting
 Terminal.clear()  # Clear screen
