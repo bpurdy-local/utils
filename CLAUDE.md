@@ -15,6 +15,8 @@ This is a Python utility library that provides static utility classes for common
 - **Logger** - Structured JSON logging with persistent context
 - **Encode**, **Decode** - Encoding/decoding operations (base64, URL, HTML, fang/defang)
 - **Session** - Enhanced HTTP session with auto-timeout and dict-based auth (inherits from requests.Session)
+- **JsonDB** - File system-based JSON database for Pydantic BaseModel instances
+- **Env** - Environment variable utilities with type conversion and .env file loading
 
 All utility classes use static methods that accept the value to operate on as the first positional parameter, followed by keyword-only arguments (enforced with the `*` separator). This design provides clear, consistent APIs without the overhead of instantiation or inheritance.
 
@@ -64,7 +66,7 @@ pytest -m "not slow"
 pytest -v
 ```
 
-The test suite has 481 tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
+The test suite has 612 tests covering all utilities, edge cases, and error conditions. Tests are organized in the `tests/` directory with one test file per module.
 
 ## Code Quality
 
@@ -121,6 +123,8 @@ Each utility class lives in its own module under `utils/`:
 **Utilities:**
 - `random_utils.py` - Random utility class (9 methods: string/number generation, choices, UUIDs)
 - `decorators.py` - Decorators utility class (5 methods: debounce, throttle, retry, memoize, once)
+- `env.py` - Env utility class (15 methods: get/get_int/get_float/get_bool/get_list/get_path, set/unset/has, load_dotenv, to_dict, clear, get_with_prefix, require)
+- `beacon.py` - Beacon utility class (10 methods: register, get with defaults/required, has, unregister, clear, list_keys, get_namespace, clear_namespace)
 
 **Logging & Encoding:**
 - `logger.py` - Logger utility class with structured JSON logging and persistent context
@@ -133,9 +137,15 @@ Each utility class lives in its own module under `utils/`:
   - `session.py` - Session class (inherits from requests.Session) with auto-timeout
   - `auth.py` - Authentication classes (BearerAuth, BasicAuth, APIKeyAuth, TokenAuth)
 
+**Database:**
+- `db/json/` - JSON file-based database package
+  - `json_db.py` - JsonDB class for storing Pydantic BaseModel instances as JSON files
+
 ### Static Utility Class Pattern
 
-**Note**: The Session class is an exception to the static utility pattern. It inherits from `requests.Session` and provides instance-based methods for HTTP requests, rather than static methods. This is necessary because HTTP sessions maintain state (cookies, connection pools, etc.).
+**Note**: The Session and JsonDB classes are exceptions to the static utility pattern:
+- **Session** inherits from `requests.Session` and provides instance-based methods for HTTP requests, maintaining state (cookies, connection pools, etc.)
+- **JsonDB** uses instance-based methods to maintain database configuration (base path, file system state)
 
 Most utility classes follow this pattern:
 
@@ -191,6 +201,7 @@ All public exports are defined in `utils/__init__.py` via the `__all__` list. Wh
 - **Python Version**: Requires Python 3.11+
 - **Runtime Dependencies**:
   - `requests>=2.31.0` - Required for Session class
+  - `pydantic>=2.0.0` - Required for JsonDB
 - **Optional Dependencies**:
   - `dev` - pytest, pytest-cov
   - `datetime` - arrow (for enhanced datetime support)
@@ -225,8 +236,8 @@ For static utility classes:
 - Do NOT inherit from base types
 - Do NOT implement instance methods or constructors
 
-For stateful utility classes (like Session):
-- Only use when state is necessary (connection pools, cookies, etc.)
+For stateful utility classes (like Session and JsonDB):
+- Only use when state is necessary (connection pools, cookies, database configuration, etc.)
 - Inherit from appropriate base class if extending existing functionality
 - Document clearly why static methods are not appropriate
 - Provide comprehensive docstrings for all methods

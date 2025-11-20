@@ -1,0 +1,12 @@
+{"timestamp": "2025-11-18T01:35:51.117991+00:00", "level": "INFO", "message": "Starting Falcon server", "host": "127.0.0.1", "port": 8000}
+{"timestamp": "2025-11-18T01:35:51.120378+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Initializing Falcon server"}
+{"timestamp": "2025-11-18T01:35:51.120437+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Loading features"}
+{"timestamp": "2025-11-18T01:35:51.120571+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Discovered features", "features": ["demo", "health"], "count": 2}
+{"timestamp": "2025-11-18T01:35:51.120992+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Feature loaded", "feature_name": "demo", "module": "demo"}
+{"timestamp": "2025-11-18T01:35:51.121202+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Feature loaded", "feature_name": "health", "module": "health"}
+{"timestamp": "2025-11-18T01:35:51.121225+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Features loaded", "feature_count": 2}
+{"timestamp": "2025-11-18T01:35:51.121242+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Registering features"}
+{"timestamp": "2025-11-18T01:35:51.121339+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Feature registered", "feature_name": "demo"}
+{"timestamp": "2025-11-18T01:35:51.121401+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Feature registered", "feature_name": "health"}
+{"timestamp": "2025-11-18T01:35:51.121421+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Server listening", "url": "http://127.0.0.1:8000"}
+{"timestamp": "2025-11-18T01:35:51.121436+00:00", "level": "INFO", "component": "falcon_server", "log_level": "INFO", "message": "Press Ctrl+C to stop"}

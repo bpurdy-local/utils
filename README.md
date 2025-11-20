@@ -407,6 +407,53 @@ Validator.is_timezone("Invalid/Zone")  # False
 Validator.is_coordinates(40.7128, -74.0060)  # True (valid lat/lon pair)
 ```
 
+### Beacon Utilities
+
+The `Beacon` class provides a global beacon for storing and retrieving application-wide values:
+
+```python
+from utils import Beacon
+
+# Register values globally
+Beacon.register("api_key", "secret123")
+Beacon.register("timeout", 30)
+
+# Retrieve from anywhere in your code
+api_key = Beacon.get("api_key")  # "secret123"
+timeout = Beacon.get("timeout", default=60)  # 30
+
+# Check existence
+if Beacon.has("api_key"):
+    print("API key is configured")
+
+# Organize with namespaces
+Beacon.register("bucket", "my-bucket", namespace="aws")
+Beacon.register("project", "my-project", namespace="gcp")
+
+bucket = Beacon.get("bucket", namespace="aws")  # "my-bucket"
+project = Beacon.get("project", namespace="gcp")  # "my-project"
+
+# Get all values in a namespace
+aws_config = Beacon.get_namespace("aws")  # {"bucket": "my-bucket"}
+
+# List keys
+keys = Beacon.list_keys()  # All keys
+aws_keys = Beacon.list_keys(namespace="aws")  # Keys in namespace
+
+# Clear values
+Beacon.unregister("api_key")  # Remove one key
+Beacon.clear_namespace("aws")  # Remove all AWS keys
+Beacon.clear()  # Remove everything
+```
+
+**Use cases:**
+- Store application configuration that doesn't change at runtime
+- Share service instances across modules without passing parameters
+- Store feature flags or environment-specific settings
+- Access constants from anywhere without imports
+
+**Note:** Use sparingly for truly global values. Overuse can make code harder to test and understand.
+
 ### Decorator Utilities
 
 The `Decorators` class provides static decorator methods:
@@ -747,6 +794,115 @@ session = Session(
 # and respect Retry-After headers
 ```
 
+### JsonDB Utilities
+
+The `JsonDB` class provides a file system-based JSON database for Pydantic models. Models are stored as JSON files in a directory structure organized by class name.
+
+```python
+from utils import JsonDB
+from pydantic import BaseModel
+
+# Define your Pydantic models
+class User(BaseModel):
+    id: str
+    name: str
+    email: str
+    age: int
+
+class Post(BaseModel):
+    id: str
+    title: str
+    content: str
+    tags: list[str]
+
+# Create a database instance
+db = JsonDB(base_path="./data")
+
+# Save models (creates ./data/User/123.json)
+user = User(id="123", name="Alice", email="alice@example.com", age=30)
+db.save(user, key="123")
+
+# Load models
+loaded_user = db.load(User, key="123")
+if loaded_user:
+    print(f"Hello, {loaded_user.name}!")
+
+# Check if a model exists
+if db.exists(User, key="123"):
+    print("User exists!")
+
+# Update an existing model
+user.age = 31
+db.update(user, key="123")  # Returns True if existed, False if new
+
+# Delete a model
+db.delete(User, key="123")  # Returns True if deleted, False if not found
+
+# List all keys for a model class
+user_keys = db.list_keys(User)  # ["123", "456", "789"]
+
+# Load all instances of a model
+all_users = db.load_all(User)  # {"123": User(...), "456": User(...)}
+for key, user in all_users.items():
+    print(f"{key}: {user.name}")
+
+# Clear all instances of a model class
+deleted_count = db.clear(User)  # Returns number of instances deleted
+
+# Works with nested data structures
+post = Post(
+    id="p1",
+    title="My Post",
+    content="This is a post",
+    tags=["python", "database", "pydantic"]
+)
+db.save(post, key="p1")  # Creates ./data/Post/p1.json
+
+# The database uses the custom JsonEncoder for serialization
+# Handles datetime, sets, tuples, and objects with to_dict() methods
+from datetime import datetime
+
+class Article(BaseModel):
+    id: str
+    title: str
+    published: datetime
+
+article = Article(id="a1", title="News", published=datetime.now())
+db.save(article, key="a1")  # Datetime is automatically serialized to ISO format
+
+# Path structure: base_path/{ClassName}/{key}.json
+# Example: ./data/User/123.json
+#          ./data/Post/p1.json
+#          ./data/Article/a1.json
+```
+
+## Templates
+
+This project includes production-ready application templates that demonstrate best practices and leverage the utils package. Templates are located in the `templates/` directory.
+
+### Falcon Server Template
+
+A modular web server built with the Falcon framework, featuring a plugin-based architecture for easy extension.
+
+**Quick Start**:
+```bash
+cd templates/falcon
+pip install falcon waitress
+python app.py
+```
+
+**Features**:
+- Feature-based modular architecture
+- Environment-based configuration
+- Structured JSON logging via utils.Logger
+- HTTP client integration via utils.Session
+- Health check endpoint included
+- Comprehensive test suite
+
+See [templates/falcon/README.md](templates/falcon/README.md) for complete documentation.
+
+For more information about templates, see [templates/README.md](templates/README.md).
+
 ## Features
 
 - **Static Utility Classes**: Pure static methods with no inheritance - clean, functional API
@@ -764,6 +920,7 @@ session = Session(
 - **Logger Utilities**: Structured JSON logging with thread-local context, key normalization, log searching, custom type handling
 - **Encode/Decode Utilities**: Base64, URL, HTML encoding/decoding, and defang/fang for security analysis
 - **Session Utilities**: Enhanced HTTP session wrapper with authentication, URL building, JSON helpers, and status checking
+- **Application Templates**: Production-ready templates (Falcon server) demonstrating utils integration
 - **Keyword-Only Arguments**: All parameters (except first) are keyword-only for clarity and safety
 - **Type Hints**: Complete type annotations for all methods
 - **Minimal Dependencies**: Only requests library required; optional dependencies include arrow for enhanced datetime parsing

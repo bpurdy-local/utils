@@ -84,3 +84,6 @@ Desktop.ini
 .env.*.local
 *.key
 *.pem
+
+# WIP dirs
+templates
