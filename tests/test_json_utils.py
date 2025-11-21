@@ -1,4 +1,3 @@
-import pytest
 
 from utils.json_utils import JSON
 

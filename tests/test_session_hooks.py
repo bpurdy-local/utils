@@ -1,6 +1,4 @@
-from unittest.mock import Mock, call, patch
-
-import pytest
+from unittest.mock import Mock, patch
 
 from utils.session import Session
 

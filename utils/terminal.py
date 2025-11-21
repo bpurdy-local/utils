@@ -189,7 +189,11 @@ class Terminal:
 
     @staticmethod
     def select(
-        message: str, *, options: list[str], default_index: int | None = None
+        message: str,
+        *,
+        options: list[str],
+        default_index: int | None = None,
+        page_size: int = 5,
     ) -> tuple[int, str]:
         """Prompt user to select from numbered list of options.
 
@@ -197,6 +201,7 @@ class Terminal:
             message: The prompt message to display
             options: List of options to display (keyword-only)
             default_index: Default option index (0-based) (keyword-only)
+            page_size: Number of options to show per page (keyword-only, default 5)
 
         Returns:
             Tuple of (selected_index, selected_option)
@@ -218,6 +223,15 @@ class Terminal:
             #             2. B (default)
             #           Select (number) [2]: █
             (1, 'B')
+
+            >>> Terminal.select("Pick item:", options=[f"Item {i}" for i in range(25)])
+            # Terminal: Pick item: (Page 1/3)
+            #             1. Item 0
+            #             2. Item 1
+            #             ...
+            #            10. Item 9
+            #           [n]ext, [p]rev, or enter number: 15
+            (14, 'Item 14')
         """
         if not options:
             raise ValueError("options list cannot be empty")
@@ -225,22 +239,62 @@ class Terminal:
         if default_index is not None and not (0 <= default_index < len(options)):
             raise ValueError(f"default_index {default_index} out of range")
 
-        print(message)
-        for idx, option in enumerate(options, 1):
-            default_marker = " (default)" if default_index == idx - 1 else ""
-            print(f"  {idx}. {option}{default_marker}")
+        # Determine if pagination is needed
+        use_pagination = len(options) > page_size
+        current_page = 0
+        total_pages = (len(options) + page_size - 1) // page_size if use_pagination else 1
 
         while True:
-            prompt = "Select (number)"
-            if default_index is not None:
-                prompt = f"{prompt} [{default_index + 1}]"
-            prompt = f"{prompt}: "
+            # Clear and display options
+            if use_pagination:
+                start_idx = current_page * page_size
+                end_idx = min(start_idx + page_size, len(options))
+                print(f"\n{message} (Page {current_page + 1}/{total_pages})")
+                for idx in range(start_idx, end_idx):
+                    display_num = idx + 1
+                    default_marker = " (default)" if default_index == idx else ""
+                    print(f"  {display_num}. {options[idx]}{default_marker}")
+            else:
+                print(message)
+                for idx, option in enumerate(options, 1):
+                    default_marker = " (default)" if default_index == idx - 1 else ""
+                    print(f"  {idx}. {option}{default_marker}")
 
-            response = input(prompt).strip()
+            # Build prompt
+            if use_pagination:
+                prompt_parts = []
+                if current_page > 0:
+                    prompt_parts.append("[p]rev")
+                if current_page < total_pages - 1:
+                    prompt_parts.append("[n]ext")
+                prompt_parts.append("or enter number")
 
+                if default_index is not None:
+                    prompt = f"{', '.join(prompt_parts)} [{default_index + 1}]: "
+                else:
+                    prompt = f"{', '.join(prompt_parts)}: "
+            else:
+                prompt = "Select (number)"
+                if default_index is not None:
+                    prompt = f"{prompt} [{default_index + 1}]"
+                prompt = f"{prompt}: "
+
+            response = input(prompt).strip().lower()
+
+            # Handle empty response (default)
             if not response and default_index is not None:
                 return (default_index, options[default_index])
 
+            # Handle pagination commands
+            if use_pagination:
+                if response == "n" and current_page < total_pages - 1:
+                    current_page += 1
+                    continue
+                elif response == "p" and current_page > 0:
+                    current_page -= 1
+                    continue
+
+            # Handle numeric selection
             try:
                 num = int(response)
                 if 1 <= num <= len(options):

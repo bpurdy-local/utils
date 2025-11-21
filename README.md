@@ -33,7 +33,7 @@ This confirms that the `utils` package is properly installed and all utility cla
 
 ## Testing
 
-The project includes a comprehensive test suite with 419 tests covering all utilities, edge cases, and error conditions.
+The project includes a comprehensive test suite with 1114 tests covering all utilities, edge cases, and error conditions.
 
 ```bash
 # Run all tests
@@ -406,6 +406,179 @@ Validator.is_timezone("UTC")  # True
 Validator.is_timezone("Invalid/Zone")  # False
 Validator.is_coordinates(40.7128, -74.0060)  # True (valid lat/lon pair)
 ```
+
+### Pydantic Utilities
+
+The `PydanticValidator` and `PydanticField` classes provide factory methods for creating Pydantic 2 field types with validation and transformation:
+
+```python
+from utils import PydanticValidator, PydanticField
+from pydantic import BaseModel
+
+# PydanticField provides common string transforms (no lambdas needed!)
+class User(BaseModel):
+    # Single transform
+    username: PydanticField.field(transforms=PydanticField.strip)
+
+    # Multiple transforms (applied in order)
+    email: PydanticField.field(
+        transforms=[PydanticField.strip, PydanticField.lower]
+    )
+
+    # Transforms + validators
+    verified_email: PydanticField.field(
+        transforms=[PydanticField.strip, PydanticField.lower],
+        validators=PydanticValidator.email()
+    )
+
+    # Custom transforms when you need arguments
+    bio: PydanticField.field(
+        transforms=lambda s: String.truncate(s, length=200)
+    )
+
+# Common string transforms available:
+# - PydanticField.strip
+# - PydanticField.lower
+# - PydanticField.upper
+# - PydanticField.title
+# - PydanticField.capitalize
+
+# Use with Integer/String utils for advanced transformations
+class Product(BaseModel):
+    quantity: PydanticField.field(
+        base_type=int,
+        transforms=lambda x: Integer.clamp(x, min_val=0, max_val=1000)
+    )
+
+# PydanticValidator provides 12 validator factory methods
+class Registration(BaseModel):
+    # Email validation
+    email: PydanticField.field(
+        transforms=[PydanticField.strip, PydanticField.lower],
+        validators=PydanticValidator.email()
+    )
+
+    # URL validation
+    website: PydanticField.field(
+        validators=PydanticValidator.url()
+    )
+
+    # Phone validation
+    phone: PydanticField.field(
+        validators=PydanticValidator.phone()
+    )
+
+    # String length validation
+    username: PydanticField.field(
+        transforms=PydanticField.strip,
+        validators=[
+            PydanticValidator.min_length(length=3),
+            PydanticValidator.max_length(length=20)
+        ]
+    )
+
+    # Length range
+    password: PydanticField.field(
+        validators=PydanticValidator.length_range(min_length=8, max_length=128)
+    )
+
+    # Pattern matching
+    username_strict: PydanticField.field(
+        validators=PydanticValidator.regex_pattern(pattern=r'^[a-zA-Z0-9_]+$')
+    )
+
+    # Choices validation
+    role: PydanticField.field(
+        validators=PydanticValidator.choices(options=['admin', 'user', 'guest'])
+    )
+
+    # Numeric range
+    age: PydanticField.field(
+        base_type=int,
+        validators=PydanticValidator.numeric_range(min_value=0, max_value=120)
+    )
+
+    # List length validation
+    tags: PydanticField.field(
+        base_type=list,
+        validators=[
+            PydanticValidator.list_min_length(length=1),
+            PydanticValidator.list_max_length(length=10)
+        ]
+    )
+
+    # Not empty validation
+    name: PydanticField.field(
+        transforms=PydanticField.strip,
+        validators=PydanticValidator.not_empty()
+    )
+
+# Custom error messages
+class CustomValidation(BaseModel):
+    email: PydanticField.field(
+        validators=PydanticValidator.email(
+            error_message="Please provide a valid email address"
+        )
+    )
+
+# Real-world example: User registration
+class UserRegistration(BaseModel):
+    username: PydanticField.field(
+        transforms=[PydanticField.strip, PydanticField.lower],
+        validators=[
+            PydanticValidator.min_length(length=3),
+            PydanticValidator.max_length(length=20),
+            PydanticValidator.regex_pattern(pattern=r'^[a-z0-9_]+$')
+        ]
+    )
+    email: PydanticField.field(
+        transforms=[PydanticField.strip, PydanticField.lower],
+        validators=PydanticValidator.email()
+    )
+    display_name: PydanticField.field(
+        transforms=[PydanticField.strip, PydanticField.title]
+    )
+    age: PydanticField.field(
+        base_type=int,
+        validators=PydanticValidator.numeric_range(min_value=13, max_value=120)
+    )
+
+# Usage
+user = UserRegistration(
+    username="  JohnDoe123  ",
+    email="  John.Doe@EXAMPLE.COM  ",
+    display_name="  john doe  ",
+    age=25
+)
+# Results in:
+# username: "johndoe123"
+# email: "john.doe@example.com"
+# display_name: "John Doe"
+# age: 25
+```
+
+**Available Validators:**
+- `email()` - Email format validation
+- `url()` - URL format validation
+- `phone()` - Phone number validation (10-15 digits)
+- `min_length(length)` - Minimum string length
+- `max_length(length)` - Maximum string length
+- `length_range(min_length, max_length)` - String length range
+- `regex_pattern(pattern)` - Regex pattern matching
+- `choices(options)` - Allowed values
+- `numeric_range(min_value, max_value)` - Numeric bounds
+- `list_min_length(length)` - Minimum list length
+- `list_max_length(length)` - Maximum list length
+- `not_empty()` - Not empty validation
+
+**Use cases:**
+- Clean data transformation before validation
+- Standardize user input (strip whitespace, normalize case)
+- Generate slugs from titles
+- Constrain numeric values (quantities, ages, prices)
+- Combine multiple validators on a single field
+- Reuse String/Integer utility methods in Pydantic models
+- Custom error messages for better UX
 
 ### Terminal Utilities
 
@@ -1238,7 +1411,7 @@ For more information about templates, see [templates/README.md](templates/README
 ## Features
 
 - **Static Utility Classes**: Pure static methods with no inheritance - clean, functional API
-- **17 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Terminal, Decorators, Logger, Encode, Decode, Session, Convert
+- **19 Utility Classes**: String, Integer, Iterable, Dict, Datetime, Path, FileIO, Regex, Random, Validator, Terminal, Decorators, Logger, Encode, Decode, Session, Convert, PydanticValidator, PydanticField
 - **String Utilities** (22 methods): Truncation, case conversions, slug generation, padding, validation (email/URL/blank), email/URL extraction, hashing
 - **Integer Utilities** (15 methods): Properties (even/odd/prime), clamping, conversions (roman/words), math operations, byte formatting, percentages
 - **Iterable Utilities** (22 methods): Chunking, flattening, filtering, grouping, partitioning, aggregations, sorting, finding items
@@ -1248,6 +1421,8 @@ For more information about templates, see [templates/README.md](templates/README
 - **Random Utilities** (14 methods): String/number generation, choices, shuffling, UUIDs, hash generation (md5, sha1, sha256, sha512, hex)
 - **Convert Utilities** (12 methods): Safe type conversion with fallbacks - to_bool, to_int, to_float, to_str, to_number, bytes_from_human, duration parsing, safe_cast, to_list, to_dict
 - **Validator Utilities** (14 methods): Email, URL, phone, UUID, credit card, hex color, IPv4, empty/numeric checks, geographic validation
+- **PydanticValidator Utilities** (12 methods): Factory methods for Pydantic 2 field validators (email, url, phone, min/max/range length, regex_pattern, choices, numeric_range, list min/max length, not_empty)
+- **PydanticField Utilities** (6 methods): Common transforms (strip, lower, upper, title, capitalize) and field() method for combining transforms and validators
 - **Terminal Utilities** (16 methods): Prompts (text, password, confirm, choice, select, multiline, int, float), formatting (clear, line, box, colorize, progress bar), custom validation
 - **Decorator Utilities** (5 methods): Debounce, throttle, retry with backoff, memoize, once
 - **Regex Utilities** (8 methods): Pattern matching, searching, replacing, splitting, group extraction, validation
@@ -1257,6 +1432,6 @@ For more information about templates, see [templates/README.md](templates/README
 - **Application Templates**: Production-ready templates (Falcon server) demonstrating utils integration
 - **Keyword-Only Arguments**: All parameters (except first) are keyword-only for clarity and safety
 - **Type Hints**: Complete type annotations for all methods
-- **Minimal Dependencies**: Only requests library required; optional dependencies include arrow for enhanced datetime parsing
-- **Comprehensive Tests**: 1020+ tests covering all utilities, edge cases, and error conditions
+- **Minimal Dependencies**: Only requests and pydantic libraries required; optional dependencies include arrow for enhanced datetime parsing
+- **Comprehensive Tests**: 1114 tests covering all utilities, edge cases, and error conditions
 

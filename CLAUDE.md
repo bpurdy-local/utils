@@ -21,6 +21,7 @@ This is a Python utility library that provides static utility classes for common
 - **Beacon** - Global beacon for storing and retrieving application-wide values with optional TTL and statistics
 - **Hash** - Hashing utilities for data integrity and security (MD5, SHA-256, SHA-512, HMAC)
 - **JSON** - Advanced JSON operations (pretty/minify, flatten/unflatten, safe parsing)
+- **PydanticValidator**, **PydanticField** - Pydantic 2 field validators and transformations (factory methods for creating validated field types)
 
 All utility classes use static methods that accept the value to operate on as the first positional parameter, followed by keyword-only arguments (enforced with the `*` separator). This design provides clear, consistent APIs without the overhead of instantiation or inheritance.
 
@@ -148,11 +149,17 @@ Each utility class lives in its own module under `utils/`:
 - `db/json/` - JSON file-based database package
   - `json_db.py` - JsonDB class for storing Pydantic BaseModel instances as JSON files
 
+**Pydantic Integration:**
+- `pydantic/` - Pydantic 2 utilities package
+  - `validator.py` - Validator class (12 factory methods: email, url, phone, min/max/range length, regex_pattern, choices, numeric_range, list min/max length, not_empty)
+  - `types.py` - Field class (6 methods: common transforms strip/lower/upper/title/capitalize, plus field() method for combining transforms and validators)
+
 ### Static Utility Class Pattern
 
-**Note**: The Session and JsonDB classes are exceptions to the static utility pattern:
+**Note**: Some classes are exceptions to the static utility pattern:
 - **Session** inherits from `requests.Session` and provides instance-based methods for HTTP requests, maintaining state (cookies, connection pools, etc.)
 - **JsonDB** uses instance-based methods to maintain database configuration (base path, file system state)
+- **PydanticValidator** and **PydanticField** use factory methods that return validator/field type functions rather than being pure static utility methods
 
 Most utility classes follow this pattern:
 

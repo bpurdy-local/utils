@@ -16,6 +16,8 @@ from utils.iterable import Iterable
 from utils.json_utils import JSON
 from utils.logger import Logger
 from utils.path import Path
+from utils.pydantic import Field as PydanticField
+from utils.pydantic import Validator as PydanticValidator
 from utils.random_utils import Random
 from utils.regex import Regex
 from utils.session import Session
@@ -43,6 +45,9 @@ __all__ = [
     "JSON",
     "Convert",
     "Terminal",
+    # Pydantic Utility Classes
+    "PydanticValidator",
+    "PydanticField",
     # Encoding/Decoding Classes
     "Encode",
     "Decode",

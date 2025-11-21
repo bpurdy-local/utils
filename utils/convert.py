@@ -1,7 +1,7 @@
 """Type conversion and parsing utilities."""
 
 import re
-from typing import Any, Type, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -285,7 +285,7 @@ class Convert:
             return default
 
     @staticmethod
-    def safe_cast(value: Any, target_type: Type[T], *, default: T | None = None) -> T | None:
+    def safe_cast(value: Any, target_type: type[T], *, default: T | None = None) -> T | None:
         """Safely cast value to target type with fallback.
 
         Examples:

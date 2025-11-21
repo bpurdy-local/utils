@@ -64,7 +64,7 @@ def main():
         print("\n✗ FAILURE: Race condition detected!")
         print(f"  Lost {total_increments - final_counter.count} updates")
 
-    print(f"\nFinal state:")
+    print("\nFinal state:")
     print(f"  Count: {final_counter.count}")
     print(f"  Last updated: {final_counter.updated_at}")
 

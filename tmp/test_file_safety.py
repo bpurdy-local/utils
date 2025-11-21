@@ -51,13 +51,13 @@ def main():
 
     final_doc = db.load(Document, key=doc_id)
 
-    print(f"Final document state:")
+    print("Final document state:")
     print(f"  ID: {final_doc.id}")
     print(f"  Version: {final_doc.version}")
     print(f"  Content length: {len(final_doc.content)} bytes")
     print(f"  Updated at: {final_doc.updated_at}")
 
-    print(f"\n✓ SUCCESS: File is intact and not corrupted!")
+    print("\n✓ SUCCESS: File is intact and not corrupted!")
     print("  - Atomic writes ensured no partial data")
     print("  - File locks prevented simultaneous writes")
     print("  - Document loaded successfully without errors")

@@ -169,9 +169,7 @@ class Env:
                 value = value.strip()
 
                 # Remove quotes if present
-                if value.startswith('"') and value.endswith('"'):
-                    value = value[1:-1]
-                elif value.startswith("'") and value.endswith("'"):
+                if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
                     value = value[1:-1]
 
                 # Process escape sequences
