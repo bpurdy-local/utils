@@ -2,6 +2,7 @@
 
 import pytest
 
+from utils import Integer, String, Validator
 from utils.model import (
     BoolField,
     Field,
@@ -13,7 +14,7 @@ from utils.model import (
 )
 
 
-# Helper functions for testing
+# Helper functions for testing (using built-in methods and utils)
 def strip(text: str) -> str:
     """Strip whitespace."""
     return text.strip()
@@ -26,12 +27,12 @@ def lower(text: str) -> str:
 
 def truncate(text: str, *, length: int) -> str:
     """Truncate to length."""
-    return text[:length]
+    return String.truncate(text, length=length, suffix="")
 
 
 def is_email(text: str) -> bool:
     """Simple email validator."""
-    return "@" in text and "." in text
+    return Validator.email(text)
 
 
 def in_range(value: int, *, min: int, max: int) -> bool:
@@ -41,11 +42,7 @@ def in_range(value: int, *, min: int, max: int) -> bool:
 
 def clamp(value: int, *, min: int, max: int) -> int:
     """Clamp value to range."""
-    if value < min:
-        return min
-    if value > max:
-        return max
-    return value
+    return Integer.clamp(value, min_val=min, max_val=max)
 
 
 class TestBasicFields:
@@ -436,18 +433,6 @@ class TestDictConversion:
 
         user = User(name="Alice", age=25)
         data = user.to_dict()
-
-        assert data == {"name": "Alice", "age": 25}
-
-    def test_model_dump(self):
-        """Test model_dump (Pydantic alias)."""
-
-        class User(Model):
-            name: StringField = StringField()
-            age: IntField = IntField()
-
-        user = User(name="Alice", age=25)
-        data = user.model_dump()
 
         assert data == {"name": "Alice", "age": 25}
 
@@ -937,9 +922,6 @@ class TestContextAwareTransformsValidators:
     def test_mixed_context_and_regular_transforms(self):
         """Test mixing context-aware and regular transforms."""
 
-        def strip(text: str) -> str:
-            return text.strip()
-
         def add_prefix(text: str, *, all_values: dict) -> str:
             role = all_values.get("role", "user")
             return f"[{role}] {text}"
@@ -1307,3 +1289,273 @@ class TestCustomObjects:
         # With metadata
         doc2 = Document(title="Test", metadata=Metadata("1.0"))
         assert doc2.metadata.version == "1.0"
+
+
+class TestAutoInject:
+    """Test auto-injection of field values to validators/transforms."""
+
+    def test_validator_with_auto_inject_single_field(self):
+        """Test validator that auto-receives a single field value."""
+
+        def validate_email_domain(email: str, *, domain: str) -> bool:
+            """Validator that checks email matches expected domain."""
+            if not email.endswith(f"@{domain}"):
+                raise ValidationError(f"Email must be from domain {domain}")
+            return True
+
+        class User(Model):
+            domain: StringField = StringField()
+            email: StringField = StringField(validate=[validate_email_domain])
+
+        # Valid - email matches domain
+        user = User(domain="example.com", email="alice@example.com")
+        assert user.email == "alice@example.com"
+
+        # Invalid - email doesn't match domain
+        with pytest.raises(ValidationError, match="Email must be from domain"):
+            User(domain="example.com", email="alice@other.com")
+
+    def test_validator_with_auto_inject_multiple_fields(self):
+        """Test validator that auto-receives multiple field values."""
+
+        def validate_age_range(age: int, *, min_age: int, max_age: int) -> bool:
+            """Validator that checks age is within configured range."""
+            if not min_age <= age <= max_age:
+                raise ValidationError(f"Age must be between {min_age} and {max_age}")
+            return True
+
+        class Person(Model):
+            min_age: IntField = IntField()
+            max_age: IntField = IntField()
+            age: IntField = IntField(validate=[validate_age_range])
+
+        # Valid - age in range
+        person = Person(min_age=18, max_age=65, age=30)
+        assert person.age == 30
+
+        # Invalid - age below minimum
+        with pytest.raises(ValidationError, match="Age must be between"):
+            Person(min_age=18, max_age=65, age=15)
+
+        # Invalid - age above maximum
+        with pytest.raises(ValidationError, match="Age must be between"):
+            Person(min_age=18, max_age=65, age=70)
+
+    def test_transform_with_auto_inject(self):
+        """Test transform that auto-receives field values."""
+
+        def add_prefix(text: str, *, prefix: str) -> str:
+            """Transform that adds a prefix from another field."""
+            return f"{prefix}{text}"
+
+        class Message(Model):
+            prefix: StringField = StringField()
+            content: StringField = StringField(transform=[strip, add_prefix])
+
+        msg = Message(prefix="[INFO] ", content="  Hello World  ")
+        assert msg.content == "[INFO] Hello World"
+
+    def test_auto_inject_with_explicit_kwargs(self):
+        """Test that explicit kwargs override auto-injected values."""
+
+        def clamp_to_range(value: int, *, min_val: int, max_val: int) -> int:
+            """Clamp value to range."""
+            return Integer.clamp(value, min_val=min_val, max_val=max_val)
+
+        class Config(Model):
+            min_val: IntField = IntField()
+            max_val: IntField = IntField()
+            # Explicit kwargs override auto-inject
+            value: IntField = IntField(transform=[(clamp_to_range, {"min_val": 0, "max_val": 100})])
+
+        # Auto-inject would use min_val=10, max_val=50
+        # But explicit kwargs use min_val=0, max_val=100
+        config = Config(min_val=10, max_val=50, value=150)
+        assert config.value == 100  # Clamped to explicit max of 100, not 50
+
+    def test_auto_inject_with_all_values_parameter(self):
+        """Test that all_values parameter takes precedence over auto-inject."""
+
+        def validate_with_all_values(email: str, *, all_values: dict) -> bool:
+            """Validator using all_values (not auto-inject)."""
+            username = all_values.get("username", "")
+            email_prefix = email.split("@")[0]
+            if email_prefix != username:
+                raise ValidationError("Email must match username")
+            return True
+
+        class User(Model):
+            username: StringField = StringField()
+            email: StringField = StringField(validate=[validate_with_all_values])
+
+        # Valid - email matches username
+        user = User(username="alice", email="alice@example.com")
+        assert user.email == "alice@example.com"
+
+        # Invalid - email doesn't match username
+        with pytest.raises(ValidationError, match="Email must match username"):
+            User(username="alice", email="bob@example.com")
+
+    def test_auto_inject_skips_non_field_parameters(self):
+        """Test that auto-inject only injects field values, not other parameters."""
+
+        def custom_validator(value: str, *, username: str, non_existent: str = "default") -> bool:
+            """Validator with a parameter that doesn't match any field."""
+            # username should be auto-injected
+            # non_existent should use default value
+            if value != f"{username}_{non_existent}":
+                raise ValidationError("Validation failed")
+            return True
+
+        class User(Model):
+            username: StringField = StringField()
+            code: StringField = StringField(validate=[custom_validator])
+
+        # Should work because non_existent uses default value
+        user = User(username="alice", code="alice_default")
+        assert user.code == "alice_default"
+
+    def test_auto_inject_with_mixed_validators(self):
+        """Test auto-inject works with mixed validator types."""
+
+        def check_length(text: str, *, max_length: int) -> bool:
+            """Validator that checks length."""
+            if len(text) > max_length:
+                raise ValidationError(f"Text exceeds max length {max_length}")
+            return True
+
+        class Post(Model):
+            max_length: IntField = IntField()
+            title: StringField = StringField(validate=[is_email, check_length])
+            content: StringField = StringField(validate=[check_length])
+
+        # Valid email that's within max_length
+        post = Post(max_length=50, title="test@example.com", content="Hello World")
+        assert post.title == "test@example.com"
+
+        # Invalid - title too long
+        with pytest.raises(ValidationError, match="Text exceeds max length"):
+            Post(max_length=10, title="test@example.com", content="Hello")
+
+
+class TestExtraFieldsMode:
+    """Test extra_fields_mode configuration for handling unknown fields."""
+
+    def test_extra_fields_mode_store_default(self):
+        """Test that unknown fields are stored by default (store mode)."""
+
+        class User(Model):
+            name: StringField = StringField()
+            email: StringField = StringField()
+
+        # Unknown fields should be stored in _extra_fields
+        user = User(name="Alice", email="alice@example.com", age=25, role="admin")
+        assert user.name == "Alice"
+        assert user.email == "alice@example.com"
+        assert user._extra_fields == {"age": 25, "role": "admin"}
+
+    def test_extra_fields_mode_store_explicit(self):
+        """Test explicit store mode for unknown fields."""
+
+        class User(Model):
+            class Config:
+                extra_fields_mode = "store"
+
+            name: StringField = StringField()
+            email: StringField = StringField()
+
+        user = User(name="Bob", email="bob@example.com", department="Engineering")
+        assert user.name == "Bob"
+        assert user._extra_fields == {"department": "Engineering"}
+
+    def test_extra_fields_mode_strict(self):
+        """Test strict mode raises error on unknown fields."""
+
+        class User(Model):
+            class Config:
+                extra_fields_mode = "strict"
+
+            name: StringField = StringField()
+            email: StringField = StringField()
+
+        # Should work fine with only known fields
+        user = User(name="Alice", email="alice@example.com")
+        assert user.name == "Alice"
+        assert user._extra_fields == {}
+
+        # Should raise error with unknown field
+        with pytest.raises(ValidationError, match="Unknown field\\(s\\) provided: 'age'"):
+            User(name="Bob", email="bob@example.com", age=30)
+
+    def test_extra_fields_mode_strict_multiple_unknown(self):
+        """Test strict mode with multiple unknown fields."""
+
+        class User(Model):
+            class Config:
+                extra_fields_mode = "strict"
+
+            name: StringField = StringField()
+
+        with pytest.raises(ValidationError, match="Unknown field\\(s\\) provided: 'age', 'email'"):
+            User(name="Alice", age=25, email="alice@example.com")
+
+    def test_extra_fields_mode_ignore(self):
+        """Test ignore mode silently ignores unknown fields."""
+
+        class User(Model):
+            class Config:
+                extra_fields_mode = "ignore"
+
+            name: StringField = StringField()
+            email: StringField = StringField()
+
+        # Unknown fields should be silently ignored
+        user = User(name="Charlie", email="charlie@example.com", age=40, role="manager")
+        assert user.name == "Charlie"
+        assert user.email == "charlie@example.com"
+        assert user._extra_fields == {}  # Should be empty, not storing unknown fields
+
+    def test_extra_fields_mode_with_optional_fields(self):
+        """Test that optional fields are not considered unknown."""
+
+        class User(Model):
+            class Config:
+                extra_fields_mode = "strict"
+
+            name: StringField = StringField()
+            email: StringField | None = None
+
+        # Should work fine - email is an optional field, not unknown
+        user = User(name="Alice", email="alice@example.com")
+        assert user.email == "alice@example.com"
+
+    def test_extra_fields_empty_when_no_unknown(self):
+        """Test that _extra_fields is empty when no unknown fields provided."""
+
+        class User(Model):
+            name: StringField = StringField()
+            email: StringField = StringField()
+
+        user = User(name="Alice", email="alice@example.com")
+        assert user._extra_fields == {}
+
+    def test_extra_fields_access(self):
+        """Test accessing stored extra fields."""
+
+        class Product(Model):
+            name: StringField = StringField()
+            price: FloatField = FloatField()
+
+        product = Product(
+            name="Widget",
+            price=19.99,
+            category="Tools",
+            manufacturer="ACME Corp",
+            sku="WDG-001",
+        )
+
+        # Verify all extra fields are stored correctly
+        assert product._extra_fields["category"] == "Tools"
+        assert product._extra_fields["manufacturer"] == "ACME Corp"
+        assert product._extra_fields["sku"] == "WDG-001"
+        assert len(product._extra_fields) == 3

@@ -85,6 +85,79 @@ class ValidationError(Exception):
 
 
 # ============================================================================
+# Computed Field Decorator
+# ============================================================================
+
+
+class ComputedFieldDescriptor:
+    """Descriptor for computed fields that are included in serialization."""
+
+    def __init__(self, func: Callable, alias: str | None = None):
+        self.func = func
+        self.alias = alias
+        self.name: str | None = None
+
+    def __set_name__(self, owner: type, name: str) -> None:
+        """Called when descriptor is assigned to a class attribute."""
+        self.name = name
+
+    def __get__(self, obj: Any, objtype: type | None = None) -> Any:
+        """Compute and return the field value."""
+        if obj is None:
+            return self
+        return self.func(obj)
+
+    def get_serialization_key(self, alias_generator: Callable[[str], str] | None = None) -> str:
+        """Get the key to use for serialization (alias or field name)."""
+        # Explicit alias takes precedence
+        if self.alias:
+            return self.alias
+
+        # Try alias generator if provided
+        if alias_generator and self.name:
+            return alias_generator(self.name)
+
+        # Fall back to field name
+        return self.name or ""
+
+
+def computed_field(func: Callable | None = None, *, alias: str | None = None) -> Any:
+    """Decorator to mark a method as a computed field that appears in serialization.
+
+    Computed fields are read-only properties whose values are calculated from other
+    fields and included in to_dict() and json() output.
+
+    Args:
+        func: The method to wrap (when used without arguments)
+        alias: Optional alias for serialization
+
+    Example:
+        ```python
+        class User(Model):
+            first_name: StringField = StringField()
+            last_name: StringField = StringField()
+
+            @computed_field
+            def full_name(self) -> str:
+                return f"{self.first_name} {self.last_name}"
+
+            @computed_field(alias="displayName")
+            def display_name(self) -> str:
+                return self.full_name.upper()
+        ```
+    """
+    def decorator(f: Callable) -> ComputedFieldDescriptor:
+        return ComputedFieldDescriptor(f, alias=alias)
+
+    if func is None:
+        # Called with arguments: @computed_field(alias="...")
+        return decorator
+    else:
+        # Called without arguments: @computed_field
+        return decorator(func)
+
+
+# ============================================================================
 # Alias Generator Helper Functions
 # ============================================================================
 
@@ -113,16 +186,33 @@ def _function_accepts_param(func: Callable, param_name: str) -> bool:
     return param_name in sig.parameters
 
 
-def _call_with_context(
-    func: Callable, value: Any, all_values: dict[str, Any], kwargs: dict
-) -> Any:
-    """Call function with optional all_values context parameter.
+def _call_with_context(func: Callable, value: Any, all_values: dict[str, Any], kwargs: dict) -> Any:
+    """Call function with optional all_values context parameter or auto-injected fields.
 
-    Attempts to call with all_values first, falls back to without it.
+    Supports three calling modes:
+    1. With all_values parameter: func(value, all_values=dict, **kwargs)
+    2. With auto-injected field values: func(value, field1=val1, field2=val2, **kwargs)
+    3. Without context: func(value, **kwargs)
     """
-    if _function_accepts_param(func, "all_values"):
+    sig = inspect.signature(func)
+
+    # Check if function accepts all_values parameter
+    if "all_values" in sig.parameters:
         return func(value, all_values=all_values, **kwargs)
-    return func(value, **kwargs)
+
+    # Check for auto-injectable field parameters
+    auto_inject = {}
+    for param_name in sig.parameters:
+        # Skip special parameters
+        if param_name in ("self", "cls", "args", "kwargs"):
+            continue
+        # Only inject if parameter name matches a field and not already in kwargs
+        if param_name in all_values and param_name not in kwargs:
+            auto_inject[param_name] = all_values[param_name]
+
+    # Merge auto-injected values with existing kwargs
+    combined_kwargs = {**auto_inject, **kwargs}
+    return func(value, **combined_kwargs)
 
 
 def _extract_callable_and_kwargs(
@@ -324,20 +414,16 @@ class BoolField(Field[bool]):
 
     def _convert_to_bool(self, value: Any) -> bool:
         """Convert value to bool with string handling."""
-        if isinstance(value, str):
-            return self._parse_bool_string(value)
-        return bool(value)
+        from utils.convert import Convert
 
-    def _parse_bool_string(self, value: str) -> bool:
-        """Parse boolean from string representation."""
-        value_lower = value.lower()
-        if value_lower in ("true", "1", "yes", "on"):
-            return True
-        if value_lower in ("false", "0", "no", "off"):
-            return False
-        raise ValidationError(
-            f"Field '{self.name}' cannot convert string {value!r} to bool"
-        )
+        result = Convert.to_bool(value)
+        if result is None:
+            if isinstance(value, str):
+                raise ValidationError(
+                    f"Field '{self.name}' cannot convert string {value!r} to bool"
+                )
+            raise ValidationError(f"Field '{self.name}' cannot convert {value!r} to bool")
+        return result
 
 
 class ListField(Field[list]):
@@ -365,19 +451,13 @@ class ListField(Field[list]):
             return
 
         if not isinstance(value, list):
-            raise ValidationError(
-                f"Field '{self.name}' must be a list, got {type(value).__name__}"
-            )
+            raise ValidationError(f"Field '{self.name}' must be a list, got {type(value).__name__}")
 
         # Validate length
         if self.min_length is not None and len(value) < self.min_length:
-            raise ValidationError(
-                f"Field '{self.name}' must have at least {self.min_length} items"
-            )
+            raise ValidationError(f"Field '{self.name}' must have at least {self.min_length} items")
         if self.max_length is not None and len(value) > self.max_length:
-            raise ValidationError(
-                f"Field '{self.name}' must have at most {self.max_length} items"
-            )
+            raise ValidationError(f"Field '{self.name}' must have at most {self.max_length} items")
 
         # Validate items
         validated_items = []
@@ -393,9 +473,7 @@ class ListField(Field[list]):
         # Type validation
         if self.item_type is not None and not isinstance(item, self.item_type):
             # Try to convert if it's a Model class
-            if isinstance(self.item_type, type) and issubclass(
-                self.item_type, Model
-            ):
+            if isinstance(self.item_type, type) and issubclass(self.item_type, Model):
                 if isinstance(item, dict):
                     item = self.item_type.from_dict(item)
                 else:
@@ -412,15 +490,11 @@ class ListField(Field[list]):
             try:
                 result = self.item_validator(item)
                 if result is False:
-                    raise ValidationError(
-                        f"Field '{self.name}[{index}]' failed validation"
-                    )
+                    raise ValidationError(f"Field '{self.name}[{index}]' failed validation")
             except ValidationError:
                 raise
             except Exception as e:
-                raise ValidationError(
-                    f"Field '{self.name}[{index}]' validation error: {e}"
-                ) from e
+                raise ValidationError(f"Field '{self.name}[{index}]' validation error: {e}") from e
 
         return item
 
@@ -448,9 +522,7 @@ class DictField(Field[dict]):
             return
 
         if not isinstance(value, dict):
-            raise ValidationError(
-                f"Field '{self.name}' must be a dict, got {type(value).__name__}"
-            )
+            raise ValidationError(f"Field '{self.name}' must be a dict, got {type(value).__name__}")
 
         # Validate keys and values
         validated_dict = {}
@@ -464,9 +536,7 @@ class DictField(Field[dict]):
     def _validate_key(self, key: Any) -> Any:
         """Validate a dictionary key."""
         if self.key_type is not None and not isinstance(key, self.key_type):
-            raise ValidationError(
-                f"Field '{self.name}' keys must be {self.key_type.__name__}"
-            )
+            raise ValidationError(f"Field '{self.name}' keys must be {self.key_type.__name__}")
         return key
 
     def _validate_value(self, value: Any, key: Any) -> Any:
@@ -474,9 +544,7 @@ class DictField(Field[dict]):
         # Type validation
         if self.value_type is not None and not isinstance(value, self.value_type):
             # Try to convert if it's a Model class
-            if isinstance(self.value_type, type) and issubclass(
-                self.value_type, Model
-            ):
+            if isinstance(self.value_type, type) and issubclass(self.value_type, Model):
                 if isinstance(value, dict):
                     value = self.value_type.from_dict(value)
                 else:
@@ -493,15 +561,11 @@ class DictField(Field[dict]):
             try:
                 result = self.value_validator(value)
                 if result is False:
-                    raise ValidationError(
-                        f"Field '{self.name}[{key!r}]' failed validation"
-                    )
+                    raise ValidationError(f"Field '{self.name}[{key!r}]' failed validation")
             except ValidationError:
                 raise
             except Exception as e:
-                raise ValidationError(
-                    f"Field '{self.name}[{key!r}]' validation error: {e}"
-                ) from e
+                raise ValidationError(f"Field '{self.name}[{key!r}]' validation error: {e}") from e
 
         return value
 
@@ -637,12 +701,14 @@ class ModelMeta(type):
         apply_transforms = {}
         apply_validators = {}
         global_validators = []
+        extra_fields_mode = "store"  # Default: store unknown fields
 
         if config_class:
             alias_generator = getattr(config_class, "alias_generator", None)
             apply_transforms = getattr(config_class, "apply_transforms", {})
             apply_validators = getattr(config_class, "apply_validators", {})
             global_validators = getattr(config_class, "global_validators", [])
+            extra_fields_mode = getattr(config_class, "extra_fields_mode", "store")
 
         # Process all field annotations
         fields = mcs._collect_fields(namespace)
@@ -651,10 +717,15 @@ class ModelMeta(type):
         _apply_bulk_transforms(fields, apply_transforms)
         _apply_bulk_validators(fields, apply_validators)
 
+        # Collect computed fields
+        computed_fields = mcs._collect_computed_fields(namespace)
+
         # Store metadata on class
         cls._fields = fields
+        cls._computed_fields = computed_fields
         cls._global_validators = global_validators
         cls._alias_generator = alias_generator
+        cls._extra_fields_mode = extra_fields_mode
 
         # Set field descriptors as class attributes
         for field_name, (field_instance, _, _) in fields.items():
@@ -677,6 +748,15 @@ class ModelMeta(type):
                 fields[field_name] = field_info
 
         return fields
+
+    @staticmethod
+    def _collect_computed_fields(namespace: dict) -> dict[str, ComputedFieldDescriptor]:
+        """Collect all computed field descriptors."""
+        computed_fields = {}
+        for name, value in namespace.items():
+            if isinstance(value, ComputedFieldDescriptor):
+                computed_fields[name] = value
+        return computed_fields
 
 
 # ============================================================================
@@ -754,6 +834,12 @@ class Model(metaclass=ModelMeta):
                     lambda vals: vals["age"] >= 18 or vals["role"] != "admin"
                 ]
 
+                # Handle unknown fields: "store" (default), "strict", or "ignore"
+                # "store": Store unknown fields in _extra_fields dict
+                # "strict": Raise ValidationError on unknown fields
+                # "ignore": Silently ignore unknown fields
+                extra_fields_mode = "store"
+
             user_name: StringField = StringField()  # Serializes as "userName"
             email: StringField = StringField()
             username: StringField = StringField()
@@ -765,6 +851,8 @@ class Model(metaclass=ModelMeta):
     _fields: dict[str, tuple[Field, Any, bool]]
     _global_validators: list[Callable]
     _alias_generator: Callable[[str], str] | None
+    _extra_fields_mode: str  # "store", "strict", or "ignore"
+    _extra_fields: dict[str, Any]
 
     def __init__(self, **kwargs: Any):
         """Initialize model with field values.
@@ -775,11 +863,13 @@ class Model(metaclass=ModelMeta):
         Raises:
             ValidationError: If required fields are missing or validation fails
         """
+        self._extra_fields = {}
         self._initialize_fields(kwargs)
         self._run_global_validators()
 
     def _initialize_fields(self, kwargs: dict[str, Any]) -> None:
         """Initialize all fields with provided or default values."""
+        # First, initialize known fields
         for field_name, (field, default, is_optional) in self._fields.items():
             if field_name in kwargs:
                 setattr(self, field_name, kwargs[field_name])
@@ -790,6 +880,23 @@ class Model(metaclass=ModelMeta):
             elif field.required:
                 raise ValidationError(f"Required field '{field_name}' is missing")
 
+        # Handle unknown fields based on extra_fields_mode
+        extra_fields_mode = getattr(self.__class__, "_extra_fields_mode", "store")
+        unknown_fields = set(kwargs.keys()) - set(self._fields.keys())
+
+        if unknown_fields:
+            if extra_fields_mode == "strict":
+                # Raise error on unknown fields
+                fields_list = ", ".join(f"'{f}'" for f in sorted(unknown_fields))
+                raise ValidationError(
+                    f"Unknown field(s) provided: {fields_list}"
+                )
+            elif extra_fields_mode == "store":
+                # Store unknown fields in _extra_fields dict
+                for field_name in unknown_fields:
+                    self._extra_fields[field_name] = kwargs[field_name]
+            # else: mode is "ignore", do nothing
+
     def _run_global_validators(self) -> None:
         """Run global validators with all field values."""
         if not hasattr(self, "_global_validators"):
@@ -799,16 +906,12 @@ class Model(metaclass=ModelMeta):
         for validator in self._global_validators:
             self._execute_global_validator(validator, values)
 
-    def _execute_global_validator(
-        self, validator: Callable, values: dict[str, Any]
-    ) -> None:
+    def _execute_global_validator(self, validator: Callable, values: dict[str, Any]) -> None:
         """Execute a single global validator with error handling."""
         try:
             result = validator(values)
             if result is False:
-                raise ValidationError(
-                    f"Global validation failed for {self.__class__.__name__}"
-                )
+                raise ValidationError(f"Global validation failed for {self.__class__.__name__}")
         except ValidationError:
             raise
         except Exception as e:
@@ -826,12 +929,13 @@ class Model(metaclass=ModelMeta):
             exclude_fields: List of field names to exclude from output
 
         Returns:
-            Dictionary with all field values
+            Dictionary with all field values (including computed fields)
         """
         exclude_fields = exclude_fields or []
         result = {}
         alias_generator = getattr(self.__class__, "_alias_generator", None)
 
+        # Add regular fields
         for field_name, (field, _, _) in self._fields.items():
             # Skip if field is in exclude list
             if field_name in exclude_fields:
@@ -854,13 +958,24 @@ class Model(metaclass=ModelMeta):
             key = field.get_serialization_key(alias_generator)
             result[key] = value
 
-        return result
+        # Add computed fields
+        computed_fields = getattr(self.__class__, "_computed_fields", {})
+        for field_name, computed_field in computed_fields.items():
+            # Skip if field is in exclude list
+            if field_name in exclude_fields:
+                continue
 
-    def model_dump(
-        self, exclude_none: bool = False, exclude_fields: list[str] | None = None
-    ) -> dict[str, Any]:
-        """Pydantic-compatible alias for to_dict."""
-        return self.to_dict(exclude_none=exclude_none, exclude_fields=exclude_fields)
+            value = getattr(self, field_name)
+
+            # Skip None values if requested
+            if exclude_none and value is None:
+                continue
+
+            # Use alias (explicit or generated)
+            key = computed_field.get_serialization_key(alias_generator)
+            result[key] = value
+
+        return result
 
     def json(
         self,
@@ -878,13 +993,15 @@ class Model(metaclass=ModelMeta):
                      chained with the built-in serializer.
 
         Returns:
-            JSON string representation of the model
+            JSON string representation of the model (including computed fields)
         """
         exclude_fields = exclude_fields or []
         alias_generator = getattr(self.__class__, "_alias_generator", None)
 
         # Build dict respecting JSON-specific exclusions
         result = {}
+
+        # Add regular fields
         for field_name, (field, _, _) in self._fields.items():
             # Skip if field is in exclude list
             if field_name in exclude_fields:
@@ -905,6 +1022,23 @@ class Model(metaclass=ModelMeta):
 
             # Use alias (explicit or generated)
             key = field.get_serialization_key(alias_generator)
+            result[key] = value
+
+        # Add computed fields
+        computed_fields = getattr(self.__class__, "_computed_fields", {})
+        for field_name, computed_field in computed_fields.items():
+            # Skip if field is in exclude list
+            if field_name in exclude_fields:
+                continue
+
+            value = getattr(self, field_name)
+
+            # Skip None values if requested
+            if exclude_none and value is None:
+                continue
+
+            # Use alias (explicit or generated)
+            key = computed_field.get_serialization_key(alias_generator)
             result[key] = value
 
         custom_serializer = kwargs.pop("default", None)
@@ -1008,5 +1142,6 @@ __all__ = [
     "DictField",
     "ModelField",
     "ValidationError",
+    "computed_field",
     "to_camel",
 ]
