@@ -126,9 +126,7 @@ class TestTransforms:
         """Test transform with arguments using tuple syntax."""
 
         class User(Model):
-            name: StringField = StringField(
-                transform=[(truncate, {"length": 5})]
-            )
+            name: StringField = StringField(transform=[(truncate, {"length": 5})])
 
         user = User(name="Alexander")
         assert user.name == "Alexa"
@@ -137,9 +135,7 @@ class TestTransforms:
         """Test mix of simple and tuple transforms."""
 
         class User(Model):
-            email: StringField = StringField(
-                transform=[strip, lower, (truncate, {"length": 10})]
-            )
+            email: StringField = StringField(transform=[strip, lower, (truncate, {"length": 10})])
 
         user = User(email="  ADMIN@EXAMPLE.COM  ")
         assert user.email == "admin@exam"
@@ -180,9 +176,7 @@ class TestValidation:
         """Test validator with arguments using tuple syntax."""
 
         class User(Model):
-            age: IntField = IntField(
-                validate=(in_range, {"min": 0, "max": 120})
-            )
+            age: IntField = IntField(validate=(in_range, {"min": 0, "max": 120}))
 
         user = User(age=25)
         assert user.age == 25
@@ -191,9 +185,7 @@ class TestValidation:
         """Test validator with args failure."""
 
         class User(Model):
-            age: IntField = IntField(
-                validate=(in_range, {"min": 0, "max": 120})
-            )
+            age: IntField = IntField(validate=(in_range, {"min": 0, "max": 120}))
 
         with pytest.raises(ValidationError):
             User(age=150)
@@ -213,10 +205,7 @@ class TestValidation:
         """Test that transforms run before validation."""
 
         class User(Model):
-            email: StringField = StringField(
-                transform=[strip, lower],
-                validate=is_email
-            )
+            email: StringField = StringField(transform=[strip, lower], validate=is_email)
 
         # Validator should see transformed value
         user = User(email="  ADMIN@EXAMPLE.COM  ")
@@ -323,12 +312,12 @@ class TestTypeCoercion:
             active: BoolField = BoolField()
 
         # True values
-        for val in ['true', 'True', 'TRUE', '1', 'yes', 'Yes', 'on', 'ON']:
+        for val in ["true", "True", "TRUE", "1", "yes", "Yes", "on", "ON"]:
             user = User(active=val)
             assert user.active is True, f"Failed for {val!r}"
 
         # False values
-        for val in ['false', 'False', 'FALSE', '0', 'no', 'No', 'off', 'OFF']:
+        for val in ["false", "False", "FALSE", "0", "no", "No", "off", "OFF"]:
             user = User(active=val)
             assert user.active is False, f"Failed for {val!r}"
 
@@ -562,13 +551,8 @@ class TestComplexExample:
         """Test comprehensive user model."""
 
         class User(Model):
-            email: StringField = StringField(
-                transform=[strip, lower],
-                validate=is_email
-            )
-            age: IntField = IntField(
-                validate=(in_range, {"min": 0, "max": 120})
-            )
+            email: StringField = StringField(transform=[strip, lower], validate=is_email)
+            age: IntField = IntField(validate=(in_range, {"min": 0, "max": 120}))
             name: StringField | None = None
             role: StringField = StringField(default="user")
 
@@ -596,9 +580,7 @@ class TestComplexExample:
         """Test transform that returns modified value."""
 
         class User(Model):
-            age: IntField = IntField(
-                transform=[(clamp, {"min": 0, "max": 120})]
-            )
+            age: IntField = IntField(transform=[(clamp, {"min": 0, "max": 120})])
 
         user = User(age=150)
         assert user.age == 120  # Clamped to max
@@ -614,13 +596,14 @@ class TestBulkTransformsValidators:
         """Test applying transforms to multiple fields at once."""
 
         class User(Model):
+            class Config:
+                apply_transforms = {
+                    ("email", "username"): [strip, lower],
+                }
+
             email: StringField = StringField()
             username: StringField = StringField()
             bio: StringField = StringField()
-
-            _apply_transforms = {
-                ("email", "username"): [strip, lower],
-            }
 
         user = User(email="  ADMIN@EXAMPLE.COM  ", username="  ADMIN  ", bio="Hello")
         assert user.email == "admin@example.com"
@@ -634,13 +617,14 @@ class TestBulkTransformsValidators:
             return len(text.strip()) > 0
 
         class User(Model):
+            class Config:
+                apply_validators = {
+                    ("email", "username"): not_empty,
+                }
+
             email: StringField = StringField()
             username: StringField = StringField()
             bio: StringField | None = None
-
-            _apply_validators = {
-                ("email", "username"): not_empty,
-            }
 
         # Valid
         user = User(email="admin@example.com", username="admin")
@@ -658,14 +642,13 @@ class TestBulkTransformsValidators:
         """Test bulk transforms combine with existing field transforms."""
 
         class User(Model):
-            email: StringField = StringField(
-                transform=[(truncate, {"length": 10})]
-            )
-            username: StringField = StringField()
+            class Config:
+                apply_transforms = {
+                    ("email", "username"): [strip, lower],
+                }
 
-            _apply_transforms = {
-                ("email", "username"): [strip, lower],
-            }
+            email: StringField = StringField(transform=[(truncate, {"length": 10})])
+            username: StringField = StringField()
 
         # Bulk transforms run first, then field-specific transforms
         user = User(email="  ADMIN@EXAMPLE.COM  ", username="  ADMIN  ")
@@ -679,12 +662,13 @@ class TestBulkTransformsValidators:
             return len(text.strip()) > 0
 
         class User(Model):
+            class Config:
+                apply_validators = {
+                    ("email", "username"): not_empty,
+                }
+
             email: StringField = StringField(validate=is_email)
             username: StringField = StringField()
-
-            _apply_validators = {
-                ("email", "username"): not_empty,
-            }
 
         # Both validators must pass
         user = User(email="admin@example.com", username="admin")
@@ -702,20 +686,17 @@ class TestBulkTransformsValidators:
         """Test multiple bulk transform groups."""
 
         class User(Model):
+            class Config:
+                apply_transforms = {
+                    ("email", "username"): [strip, lower],
+                    ("bio",): [strip],
+                }
+
             email: StringField = StringField()
             username: StringField = StringField()
             bio: StringField = StringField()
 
-            _apply_transforms = {
-                ("email", "username"): [strip, lower],
-                ("bio",): [strip],
-            }
-
-        user = User(
-            email="  ADMIN@EXAMPLE.COM  ",
-            username="  ADMIN  ",
-            bio="  Hello World  "
-        )
+        user = User(email="  ADMIN@EXAMPLE.COM  ", username="  ADMIN  ", bio="  Hello World  ")
         assert user.email == "admin@example.com"
         assert user.username == "admin"
         assert user.bio == "Hello World"
@@ -733,10 +714,11 @@ class TestGlobalValidators:
             return email_prefix == values["username"]
 
         class User(Model):
+            class Config:
+                global_validators = [validate_consistency]
+
             email: StringField = StringField()
             username: StringField = StringField()
-
-            _global_validators = [validate_consistency]
 
         # Valid - email prefix matches username
         user = User(email="admin@example.com", username="admin")
@@ -755,10 +737,11 @@ class TestGlobalValidators:
             return True
 
         class User(Model):
+            class Config:
+                global_validators = [validate_age_role]
+
             age: IntField = IntField()
             role: StringField = StringField()
-
-            _global_validators = [validate_age_role]
 
         # Valid - adult admin
         user = User(age=25, role="admin")
@@ -786,11 +769,12 @@ class TestGlobalValidators:
             return True
 
         class User(Model):
+            class Config:
+                global_validators = [validate_age_role, validate_email_domain]
+
             age: IntField = IntField()
             role: StringField = StringField()
             email: StringField = StringField()
-
-            _global_validators = [validate_age_role, validate_email_domain]
 
         # Valid - meets all criteria
         user = User(age=25, role="admin", email="admin@company.com")
@@ -814,10 +798,11 @@ class TestGlobalValidators:
             return True
 
         class User(Model):
+            class Config:
+                global_validators = [validate_bio_length]
+
             username: StringField = StringField()
             bio: StringField | None = None
-
-            _global_validators = [validate_bio_length]
 
         # Valid - no bio
         user = User(username="admin")
@@ -841,9 +826,10 @@ class TestGlobalValidators:
             return True
 
         class User(Model):
-            age: IntField = IntField()
+            class Config:
+                global_validators = [count_calls]
 
-            _global_validators = [count_calls]
+            age: IntField = IntField()
 
         # Global validator runs once on init
         user = User(age=25)
@@ -908,12 +894,13 @@ class TestContextAwareTransformsValidators:
             return email
 
         class User(Model):
+            class Config:
+                apply_transforms = {
+                    ("email",): [normalize_email],
+                }
+
             username: StringField = StringField()
             email: StringField = StringField()
-
-            _apply_transforms = {
-                ("email",): [normalize_email],
-            }
 
         user = User(username="alice", email="ALICE@COMPANY.COM")
         assert user.email == "alice@company.com"
@@ -931,12 +918,13 @@ class TestContextAwareTransformsValidators:
             return True
 
         class User(Model):
+            class Config:
+                apply_validators = {
+                    ("email",): validate_email_matches_username,
+                }
+
             username: StringField = StringField()
             email: StringField = StringField()
-
-            _apply_validators = {
-                ("email",): validate_email_matches_username,
-            }
 
         # Valid - email matches username
         user = User(username="alice", email="alice@example.com")
@@ -975,7 +963,7 @@ class TestCustomObjects:
                 self.value = value
 
         class MyModel(Model):
-            data: Field = Field()
+            data: Field[CustomObject] = Field()
 
         obj = CustomObject(42)
         model = MyModel(data=obj)
@@ -1167,7 +1155,12 @@ class TestCustomObjects:
 
         def serialize_color(obj):
             if isinstance(obj, Color):
-                return {"r": obj.r, "g": obj.g, "b": obj.b, "hex": f"#{obj.r:02x}{obj.g:02x}{obj.b:02x}"}
+                return {
+                    "r": obj.r,
+                    "g": obj.g,
+                    "b": obj.b,
+                    "hex": f"#{obj.r:02x}{obj.g:02x}{obj.b:02x}",
+                }
             raise TypeError
 
         class Theme(Model):
