@@ -105,9 +105,7 @@ class Model(metaclass=ModelMeta):
             if extra_fields_mode == "strict":
                 # Raise error on unknown fields
                 fields_list = ", ".join(f"'{f}'" for f in sorted(unknown_fields))
-                raise ValidationError(
-                    f"Unknown field(s) provided: {fields_list}"
-                )
+                raise ValidationError(f"Unknown field(s) provided: {fields_list}")
             elif extra_fields_mode == "store":
                 # Store unknown fields in _extra_fields dict
                 for field_name in unknown_fields:

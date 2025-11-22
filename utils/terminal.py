@@ -704,6 +704,7 @@ class Terminal:
             #           Code: 12345
             '12345'
         """
+
         # Wrap the simple bool validator into the tuple format expected by prompt()
         def wrapped_validator(value: str) -> tuple[bool, str | None]:
             is_valid = validator(value)

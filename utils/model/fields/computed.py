@@ -63,6 +63,7 @@ def computed_field(func: Callable | None = None, *, alias: str | None = None) ->
                 return self.full_name.upper()
         ```
     """
+
     def decorator(f: Callable) -> ComputedFieldDescriptor:
         return ComputedFieldDescriptor(f, alias=alias)
 
