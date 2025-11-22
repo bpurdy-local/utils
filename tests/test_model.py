@@ -1290,6 +1290,74 @@ class TestCustomObjects:
         doc2 = Document(title="Test", metadata=Metadata("1.0"))
         assert doc2.metadata.version == "1.0"
 
+    def test_config_json_serializer(self):
+        """Test setting json_serializer in Config class."""
+
+        class Color:
+            def __init__(self, r, g, b):
+                self.r = r
+                self.g = g
+                self.b = b
+
+        def serialize_color(obj):
+            if isinstance(obj, Color):
+                return f"#{obj.r:02x}{obj.g:02x}{obj.b:02x}"
+            raise TypeError
+
+        class Theme(Model):
+            class Config:
+                json_serializer = serialize_color
+
+            name: StringField = StringField()
+            primary_color: Field = Field()
+
+        color = Color(255, 128, 0)
+        theme = Theme(name="Sunset", primary_color=color)
+
+        import json
+
+        # Config serializer should be used automatically
+        json_str = theme.json()
+        parsed = json.loads(json_str)
+        assert parsed["primary_color"] == "#ff8000"
+
+    def test_config_json_serializer_override(self):
+        """Test that per-call serializer overrides Config serializer."""
+
+        class CustomType:
+            def __init__(self, value):
+                self.value = value
+
+        def config_serializer(obj):
+            if isinstance(obj, CustomType):
+                return {"config": obj.value}
+            raise TypeError
+
+        def override_serializer(obj):
+            if isinstance(obj, CustomType):
+                return {"override": obj.value}
+            raise TypeError
+
+        class DataModel(Model):
+            class Config:
+                json_serializer = config_serializer
+
+            data: Field = Field()
+
+        model = DataModel(data=CustomType("test"))
+
+        import json
+
+        # Should use Config serializer by default
+        json_str = model.json()
+        parsed = json.loads(json_str)
+        assert parsed["data"]["config"] == "test"
+
+        # Should use per-call serializer when provided
+        json_str = model.json(default=override_serializer)
+        parsed = json.loads(json_str)
+        assert parsed["data"]["override"] == "test"
+
 
 class TestAutoInject:
     """Test auto-injection of field values to validators/transforms."""

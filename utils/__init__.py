@@ -26,6 +26,7 @@ from utils.model import (
     ModelField,
     StringField,
     ValidationError,
+    computed_field,
     to_camel,
 )
 from utils.path import Path
@@ -69,6 +70,7 @@ __all__ = [
     "DictField",
     "ModelField",
     "ValidationError",
+    "computed_field",
     "to_camel",
     # Pydantic Utility Classes
     "PydanticValidator",
