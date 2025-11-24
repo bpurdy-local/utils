@@ -12,13 +12,11 @@ def test_our_config_with_config_dict_option():
     class User(PydanticModel):
         # Our custom Config with Pydantic options via config_dict
         class Config:
-            apply_transforms = {
-                ("email",): [str.strip, str.lower]
-            }
-            extra_fields_mode = "strict"
+            apply_transforms = {("email",): [str.strip, str.lower]}
             # Use config_dict to pass Pydantic options
             config_dict = {
                 "str_strip_whitespace": True,
+                "extra": "forbid",
             }
 
         name: str
@@ -55,9 +53,7 @@ def test_pydantic_v1_style_config_warning():
 
     class User(PydanticModel):
         class Config:
-            apply_transforms = {
-                ("email",): [str.lower]
-            }
+            apply_transforms = {("email",): [str.lower]}
 
         email: str
 

@@ -162,9 +162,7 @@ class PydanticModel(BaseModel):
                 except ValidationError:
                     raise
                 except Exception as e:
-                    raise ValidationError(
-                        f"Validation error for field '{field_name}': {e}"
-                    ) from e
+                    raise ValidationError(f"Validation error for field '{field_name}': {e}") from e
 
     def _run_global_validators(self) -> None:
         """Run global validators with all field values.
@@ -182,9 +180,7 @@ class PydanticModel(BaseModel):
             try:
                 result = validator(all_values)
                 if result is False:
-                    raise ValidationError(
-                        f"Global validation failed for {self.__class__.__name__}"
-                    )
+                    raise ValidationError(f"Global validation failed for {self.__class__.__name__}")
             except ValidationError:
                 raise
             except Exception as e:
@@ -338,10 +334,3 @@ class PydanticModel(BaseModel):
         config_dict = getattr(config, "config_dict", {})
         if config_dict:
             cls.model_config = ConfigDict(**{**cls.model_config, **config_dict})
-
-        # Handle extra_fields_mode
-        extra_mode = getattr(config, "extra_fields_mode", None)
-        if extra_mode:
-            mode_map = {"store": "allow", "strict": "forbid", "ignore": "ignore"}
-            if extra_mode in mode_map:
-                cls.model_config = ConfigDict(**{**cls.model_config, "extra": mode_map[extra_mode]})

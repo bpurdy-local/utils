@@ -27,9 +27,7 @@ class TestConfigBasedTransforms:
 
         class User(PydanticModel):
             class Config:
-                apply_transforms = {
-                    ("email", "username"): [str.strip, str.lower]
-                }
+                apply_transforms = {("email", "username"): [str.strip, str.lower]}
 
             email: str
             username: str
@@ -177,8 +175,7 @@ class TestGlobalValidators:
             class Config:
                 global_validators = [
                     lambda v: v["age"] >= 18 or v["role"] != "admin",
-                    lambda v: v["email"].endswith("@company.com")
-                    or v["role"] != "admin",
+                    lambda v: v["email"].endswith("@company.com") or v["role"] != "admin",
                 ]
 
             email: str

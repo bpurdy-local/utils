@@ -32,7 +32,7 @@ This document tracks feature parity between the pure-Python `utils.model` packag
 | **exclude_none** | ✅ | ✅ | Exclude None values from serialization |
 | **exclude_fields** | ✅ | ✅ | Exclude specific fields from serialization |
 | **Custom JSON serializer** | ✅ | ✅ | Via `Config.json_serializer` |
-| **Extra fields handling** | ✅ | ✅ | Both support store/strict/ignore via `Config.extra_fields_mode` |
+| **Extra fields handling** | ✅ | ✅ | utils/model uses `Config.extra_fields_mode`, pydantic_model uses native Pydantic `ConfigDict(extra=...)` |
 | **Type coercion** | ✅ | ✅ | Both automatically convert compatible types |
 | **Nested models** | ✅ | ✅ | Both support nested model instances |
 | **Pydantic Field** | N/A | ✅ | Use Pydantic's Field() for constraints, aliases, descriptions |

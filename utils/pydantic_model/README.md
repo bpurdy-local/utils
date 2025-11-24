@@ -1,141 +1,196 @@
-# Pydantic Model System
+# Pydantic Model with Transform/Validate API
 
-A Pydantic-based Model system that preserves the clean transform/validate API from `utils.model` while leveraging Pydantic v2's performance and ecosystem benefits.
-
-## Overview
-
-`PydanticModel` extends Pydantic's `BaseModel` to provide:
-- **Config-based transforms and validators** - Apply transforms/validators to multiple fields via Config
-- **Auto-injection** - Field values automatically injected into validators/transforms
-- **Global validators** - Cross-field validation logic
-- **Full Pydantic compatibility** - Works with Field, computed_field, and all Pydantic features
+Enhanced Pydantic BaseModel with Config-based transforms, validators, and auto-injection features.
 
 ## Installation
 
 ```python
 from utils.pydantic_model import PydanticModel, ValidationError
-from pydantic import Field, computed_field  # Use Pydantic's Field and computed_field
 ```
 
-## Basic Usage
+## Features
 
-### Simple Model
+This package extends Pydantic's `BaseModel` with:
+
+- **Config-based transforms** - Apply transforms to multiple fields via `Config.apply_transforms`
+- **Config-based validators** - Apply validators to multiple fields via `Config.apply_validators`
+- **Global validators** - Cross-field validation via `Config.global_validators`
+- **Auto-injection** - Field values automatically injected into validators/transforms by parameter name
+- **Custom JSON serializer** - Override JSON serialization via `Config.json_serializer`
+
+All standard Pydantic features work normally.
+
+## Quick Start
 
 ```python
 from utils.pydantic_model import PydanticModel
-
-class User(PydanticModel):
-    email: str
-    age: int
-    role: str = "user"  # Default value
-
-user = User(email="admin@example.com", age=25)
-print(user.email)  # "admin@example.com"
-```
-
-### Config-based Transforms
-
-Apply transforms to multiple fields using the `Config` class:
-
-```python
-from utils.pydantic_model import PydanticModel
-from utils import String
 
 class User(PydanticModel):
     class Config:
+        # Transform multiple fields
         apply_transforms = {
             ("email", "username"): [str.strip, str.lower]
         }
 
+        # Validate multiple fields
+        apply_validators = {
+            ("email",): lambda x: "@" in x,
+            ("age",): lambda x: 0 <= x <= 120
+        }
+
+        # Global cross-field validation
+        global_validators = [
+            lambda v: v["age"] >= 18 or v["role"] != "admin"
+        ]
+
     email: str
     username: str
     age: int
+    role: str = "user"
 
 user = User(email="  ADMIN@EXAMPLE.COM  ", username="  ADMIN  ", age=25)
 print(user.email)     # "admin@example.com"
 print(user.username)  # "admin"
 ```
 
-### Config-based Validators
+## Config-based Transforms
 
-Apply validators to multiple fields:
+Apply transforms to multiple fields using `Config.apply_transforms`:
 
 ```python
-from utils.pydantic_model import PydanticModel
+class User(PydanticModel):
+    class Config:
+        apply_transforms = {
+            # Apply to multiple fields
+            ("email", "username"): [str.strip, str.lower],
+
+            # Transform chains
+            ("title",): [str.strip, str.title],
+
+            # Transforms with arguments (tuple syntax)
+            ("summary",): [(truncate, {"max_length": 100})]
+        }
+
+    email: str
+    username: str
+    title: str
+    summary: str
+```
+
+**Transform execution:**
+- Transforms run **before** Pydantic validation
+- Applied in sequence (left to right)
+- Each transform receives the output of the previous one
+
+## Config-based Validators
+
+Apply validators to multiple fields using `Config.apply_validators`:
+
+```python
 from utils import Validator
 
 class User(PydanticModel):
     class Config:
         apply_validators = {
             ("email",): Validator.email,
-            ("age",): lambda x: 0 <= x <= 120
+            ("age",): lambda x: 0 <= x <= 120,
+
+            # Multiple validators per field
+            ("password",): [
+                lambda x: len(x) >= 8,
+                lambda x: any(c.isupper() for c in x)
+            ],
+
+            # Validators with arguments (tuple syntax)
+            ("username",): [(min_length, {"length": 3})]
         }
 
     email: str
     age: int
-
-# Raises ValidationError if email is invalid or age out of range
-user = User(email="admin@example.com", age=25)
+    password: str
+    username: str
 ```
 
-### Global Validators
+**Validator execution:**
+- Validators run **after** Pydantic validation and transforms
+- All validators must pass (return `True` or not return `False`)
+- Runs before global validators
 
-Validate across multiple fields:
+## Global Validators
+
+Cross-field validation using `Config.global_validators`:
 
 ```python
-from utils.pydantic_model import PydanticModel
-
 class User(PydanticModel):
     class Config:
         global_validators = [
-            lambda v: v["age"] >= 18 or v["role"] != "admin"
+            # Admins must be 18+
+            lambda v: v["age"] >= 18 or v["role"] != "admin",
+
+            # Passwords must match
+            lambda v: v["password"] == v["confirm_password"]
         ]
 
     age: int
     role: str
-
-# Raises ValidationError: admins must be 18+
-user = User(age=16, role="admin")  # ❌ Error
-
-# OK: non-admin can be under 18
-user = User(age=16, role="user")   # ✅ OK
+    password: str
+    confirm_password: str
 ```
 
-## Advanced Features
+**Global validator execution:**
+- Receives dict of all field values
+- Runs **after** field transforms and validators
+- All global validators must pass
 
-### Auto-injection
+## Auto-injection
 
-Validators and transforms can reference other fields by name:
+Validators and transforms can reference other fields by parameter name:
 
 ```python
-from utils.pydantic_model import PydanticModel
-
 def validate_password_match(password: str, confirm_password: str) -> bool:
-    """Auto-injected confirm_password from other field."""
+    """Auto-injected: confirm_password from model fields."""
     return password == confirm_password
+
+def format_full_name(first_name: str, last_name: str) -> str:
+    """Auto-injected: last_name from model fields."""
+    return f"{first_name} {last_name}"
 
 class User(PydanticModel):
     class Config:
         apply_validators = {
             ("password",): validate_password_match
         }
+        apply_transforms = {
+            ("display_name",): format_full_name  # Uses first_name field
+        }
 
+    first_name: str
+    last_name: str
     password: str
     confirm_password: str
+    display_name: str = ""
 
-user = User(password="secret123", confirm_password="secret123")  # ✅ OK
-user = User(password="secret123", confirm_password="different")  # ❌ Error
+user = User(
+    first_name="John",
+    last_name="Doe",
+    password="secret123",
+    confirm_password="secret123",
+    display_name=""  # Will be transformed to "John Doe"
+)
 ```
 
-### Context-aware Validation
+**How it works:**
+- Function parameters are matched against field names
+- Matching fields are automatically injected
+- Special parameter `all_values: dict` injects all field values
 
-Use `all_values` parameter to access all field values:
+### Context-aware with all_values
+
+Use `all_values` parameter to access all fields:
 
 ```python
-from utils.pydantic_model import PydanticModel
-
-def validate_email_domain(email: str, all_values: dict) -> bool:
-    """Check email domain matches organization."""
+def validate_admin_email(email: str, all_values: dict) -> bool:
+    """Admins must use company email."""
     if all_values.get("role") == "admin":
         return email.endswith("@company.com")
     return True
@@ -143,222 +198,16 @@ def validate_email_domain(email: str, all_values: dict) -> bool:
 class User(PydanticModel):
     class Config:
         apply_validators = {
-            ("email",): validate_email_domain
+            ("email",): validate_admin_email
         }
 
     email: str
     role: str
-
-user = User(email="admin@company.com", role="admin")  # ✅ OK
-user = User(email="user@gmail.com", role="user")      # ✅ OK
-user = User(email="admin@gmail.com", role="admin")    # ❌ Error
 ```
 
-### Transform Chains
+## Custom JSON Serializer
 
-Apply multiple transforms in sequence:
-
-```python
-from utils.pydantic_model import PydanticModel
-from utils import String
-
-class Article(PydanticModel):
-    class Config:
-        apply_transforms = {
-            ("title",): [str.strip, str.title],
-            ("slug",): [str.strip, str.lower, lambda s: s.replace(" ", "-")]
-        }
-
-    title: str
-    slug: str
-
-article = Article(title="  hello world  ", slug="  Hello World  ")
-print(article.title)  # "Hello World"
-print(article.slug)   # "hello-world"
-```
-
-### Transforms with Arguments
-
-Pass arguments to transforms using tuple syntax:
-
-```python
-from utils.pydantic_model import PydanticModel
-
-def truncate(text: str, max_length: int) -> str:
-    return text[:max_length]
-
-class Article(PydanticModel):
-    class Config:
-        apply_transforms = {
-            ("summary",): [(truncate, {"max_length": 100})]
-        }
-
-    summary: str
-
-article = Article(summary="x" * 200)
-print(len(article.summary))  # 100
-```
-
-### Extra Fields Handling
-
-Control how extra/unknown fields are handled:
-
-```python
-from utils.pydantic_model import PydanticModel
-
-# Store mode (default) - stores extra fields
-class User(PydanticModel):
-    class Config:
-        extra_fields_mode = "store"  # default
-
-    name: str
-    age: int
-
-user = User(name="Alice", age=25, role="admin")
-print(user.role)  # "admin"
-
-# Strict mode - raises error on extra fields
-class StrictUser(PydanticModel):
-    class Config:
-        extra_fields_mode = "strict"
-
-    name: str
-    age: int
-
-user = StrictUser(name="Alice", age=25, role="admin")  # ❌ ValidationError
-
-# Ignore mode - silently ignores extra fields
-class IgnoreUser(PydanticModel):
-    class Config:
-        extra_fields_mode = "ignore"
-
-    name: str
-    age: int
-
-user = IgnoreUser(name="Alice", age=25, role="admin")  # ✅ OK
-# user.role does not exist
-```
-
-### Pydantic Field Options
-
-Use Pydantic's `Field` for additional options:
-
-```python
-from utils.pydantic_model import PydanticModel
-from pydantic import Field
-
-class User(PydanticModel):
-    email: str = Field(description="User email address")
-    age: int = Field(ge=0, le=120, description="User age")
-    name: str = Field(alias="full_name")
-
-user = User(full_name="John Doe", email="john@example.com", age=25)
-print(user.name)  # "John Doe"
-```
-
-### Computed Fields
-
-Use Pydantic's `@computed_field` decorator:
-
-```python
-from utils.pydantic_model import PydanticModel
-from pydantic import computed_field
-
-class User(PydanticModel):
-    first_name: str
-    last_name: str
-
-    @computed_field
-    @property
-    def full_name(self) -> str:
-        return f"{self.first_name} {self.last_name}"
-
-user = User(first_name="John", last_name="Doe")
-print(user.full_name)  # "John Doe"
-```
-
-## Serialization
-
-### to_dict()
-
-```python
-user = User(email="admin@example.com", age=25, role="admin")
-
-# Basic dict conversion
-data = user.to_dict()
-
-# Exclude None values
-data = user.to_dict(exclude_none=True)
-
-# Exclude specific fields
-data = user.to_dict(exclude_fields=["role"])
-```
-
-### json()
-
-```python
-# Serialize to JSON string
-json_str = user.json()
-
-# With exclusions
-json_str = user.json(exclude_none=True, exclude_fields=["role"])
-
-# Custom serializer
-class Config:
-    json_serializer = custom_serializer_func
-
-json_str = user.json()
-```
-
-### from_dict() / model_validate()
-
-```python
-# From dictionary
-user = User.from_dict({"email": "admin@example.com", "age": 25})
-
-# Pydantic-compatible alias
-user = User.model_validate({"email": "admin@example.com", "age": 25})
-
-# From JSON string
-user = User.model_validate_json('{"email": "admin@example.com", "age": 25}')
-```
-
-## Configuration Options
-
-### All Config Options
-
-```python
-class User(PydanticModel):
-    class Config:
-        # Extra fields handling: "store" (default), "strict", or "ignore"
-        extra_fields_mode = "store"
-
-        # Apply transforms to multiple fields
-        apply_transforms = {
-            ("email", "username"): [str.strip, str.lower]
-        }
-
-        # Apply validators to multiple fields
-        apply_validators = {
-            ("email",): Validator.email,
-            ("age",): lambda x: 0 <= x <= 120
-        }
-
-        # Global validators with cross-field logic
-        global_validators = [
-            lambda v: v["age"] >= 18 or v["role"] != "admin"
-        ]
-
-        # Custom JSON serializer for all json() calls
-        json_serializer = custom_serializer_function
-
-    email: str
-    username: str
-    age: int
-    role: str
-```
-
-### Custom JSON Serializer
+Override JSON serialization for custom types via `Config.json_serializer`:
 
 ```python
 from datetime import datetime
@@ -376,48 +225,100 @@ class Article(PydanticModel):
     published: datetime
 
 article = Article(title="Hello", published=datetime.now())
-json_str = article.json()  # Uses custom serializer for datetime
+json_str = article.json()  # Uses custom serializer for datetime objects
 ```
 
-## Key Benefits Over Pure-Python Model
+**Note:** For standard serialization, use Pydantic's native methods:
+- `model_dump()` - Convert to dict
+- `model_dump_json()` - Convert to JSON string
+- `model_validate()` - Create from dict
+- `model_validate_json()` - Create from JSON string
 
-1. **Performance** - Pydantic v2 is built on Rust (10-50x faster validation)
-2. **Type Safety** - Better integration with mypy/pyright
-3. **JSON Schema** - Can generate schemas for API documentation
-4. **Ecosystem** - Compatible with FastAPI, LangChain, and other Pydantic-based tools
-5. **Serialization** - Pydantic's optimized JSON serialization
+## Using Pydantic ConfigDict
 
-## Migration from utils.model
-
-**Only Two Changes:**
-
-1. Change base class from `Model` to `PydanticModel`
-2. Move field-level transforms/validators to Config
+Pass Pydantic configuration via `Config.config_dict`:
 
 ```python
-# Before (utils.model)
-from utils.model import Model, StringField
+from pydantic import ConfigDict
 
-class User(Model):
-    email: str = StringField(
-        transform=[str.strip, str.lower],
-        validate=Validator.email
+class User(PydanticModel):
+    class Config:
+        apply_transforms = {
+            ("email",): [str.lower]
+        }
+
+        # Pydantic options
+        config_dict = {
+            "extra": "forbid",  # Reject extra fields
+            "str_strip_whitespace": True,
+            "validate_assignment": True
+        }
+
+    email: str
+    age: int
+```
+
+Or use `model_config` directly:
+
+```python
+from pydantic import ConfigDict
+
+class User(PydanticModel):
+    model_config = ConfigDict(
+        extra="forbid",
+        str_strip_whitespace=True
     )
 
-# After (utils.pydantic_model)
+    email: str
+    age: int
+```
+
+## Complete Config Example
+
+```python
 from utils.pydantic_model import PydanticModel
 from utils import Validator
 
 class User(PydanticModel):
     class Config:
+        # Transform fields
         apply_transforms = {
-            ("email",): [str.strip, str.lower]
+            ("email", "username"): [str.strip, str.lower],
+            ("bio",): [(truncate, {"max_length": 500})]
         }
+
+        # Validate fields
         apply_validators = {
-            ("email",): Validator.email
+            ("email",): Validator.email,
+            ("age",): lambda x: 0 <= x <= 120,
+            ("password",): [
+                lambda x: len(x) >= 8,
+                lambda x: any(c.isupper() for c in x)
+            ]
+        }
+
+        # Global cross-field validation
+        global_validators = [
+            lambda v: v["age"] >= 18 or v["role"] != "admin",
+            lambda v: v["password"] == v["confirm_password"]
+        ]
+
+        # Custom JSON serializer
+        json_serializer = custom_serializer_function
+
+        # Pydantic options
+        config_dict = {
+            "extra": "forbid",
+            "str_strip_whitespace": True
         }
 
     email: str
+    username: str
+    bio: str
+    age: int
+    role: str
+    password: str
+    confirm_password: str
 ```
 
 ## Error Handling
@@ -428,21 +329,17 @@ from utils.pydantic_model import ValidationError
 try:
     user = User(email="invalid", age=25)
 except ValidationError as e:
-    print(e)  # Validation error details
+    print(e)  # Validation error message
     print(e.pydantic_error)  # Access underlying Pydantic error
 ```
 
-## Recommendation
+## Execution Order
 
-**Use `PydanticModel` for:**
-- Production APIs (FastAPI integration)
-- Performance-critical applications
-- Projects requiring JSON Schema
-- Team projects (better IDE support)
-- New greenfield projects
+When creating a model instance:
 
-**Use Pure `Model` for:**
-- Internal scripts/tools
-- Existing codebases (no migration needed)
-- When you want zero Pydantic dependency
-- Educational/learning purposes
+1. **Transforms** run first (on input data)
+2. **Pydantic validation** (type checking, Field constraints)
+3. **Custom validators** (from `apply_validators`)
+4. **Global validators** (from `global_validators`)
+
+This ensures transforms prepare data before validation occurs.
