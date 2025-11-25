@@ -330,7 +330,56 @@ class PydanticModel(BaseModel):
                     cls._field_validators[field_name] = []
                 cls._field_validators[field_name].extend(validator_list)
 
-        # Merge Pydantic ConfigDict if present
-        config_dict = getattr(config, "config_dict", {})
-        if config_dict:
-            cls.model_config = ConfigDict(**{**cls.model_config, **config_dict})
+        # Extract Pydantic ConfigDict options from Config class
+        # Our custom options that should NOT be passed to ConfigDict
+        custom_options = {
+            "apply_transforms",
+            "apply_validators",
+            "global_validators",
+            "json_serializer",
+            "config_dict",  # Legacy nested dict support
+        }
+
+        # Known Pydantic ConfigDict options (from Pydantic v2 docs)
+        pydantic_options = {
+            "extra",
+            "frozen",
+            "validate_assignment",
+            "arbitrary_types_allowed",
+            "str_strip_whitespace",
+            "str_to_lower",
+            "str_to_upper",
+            "str_max_length",
+            "str_min_length",
+            "strict",
+            "revalidate_instances",
+            "ser_json_timedelta",
+            "ser_json_bytes",
+            "validate_default",
+            "populate_by_name",
+            "use_enum_values",
+            "from_attributes",
+            "loc_by_alias",
+        }
+
+        # Extract Pydantic options from Config class attributes
+        config_dict_options = {}
+        for attr_name in dir(config):
+            # Skip private/magic attributes and methods
+            if attr_name.startswith("_") or callable(getattr(config, attr_name)):
+                continue
+            # Skip our custom options
+            if attr_name in custom_options:
+                continue
+            # Include known Pydantic options
+            if attr_name in pydantic_options:
+                config_dict_options[attr_name] = getattr(config, attr_name)
+
+        # Also support legacy config_dict attribute for backwards compatibility
+        legacy_config_dict = getattr(config, "config_dict", {})
+        if legacy_config_dict:
+            config_dict_options.update(legacy_config_dict)
+
+        # Merge with existing model_config
+        if config_dict_options:
+            cls.model_config = ConfigDict(**{**cls.model_config, **config_dict_options})

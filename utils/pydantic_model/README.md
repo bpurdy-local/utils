@@ -211,54 +211,73 @@ Override JSON serialization for custom types via `Config.json_serializer`:
 
 ```python
 from datetime import datetime
+from decimal import Decimal
+from pathlib import Path
 
 def custom_serializer(obj):
+    """Handle types that aren't JSON-serializable by default."""
     if isinstance(obj, datetime):
         return obj.isoformat()
-    raise TypeError(f"Cannot serialize {type(obj)}")
+    if isinstance(obj, Decimal):
+        return float(obj)
+    if isinstance(obj, Path):
+        return str(obj)
+    if isinstance(obj, set):
+        return list(obj)
+    raise TypeError(f"Type {type(obj)} not serializable")
 
-class Article(PydanticModel):
+class Transaction(PydanticModel):
     class Config:
         json_serializer = custom_serializer
 
-    title: str
-    published: datetime
+    id: str
+    amount: Decimal
+    timestamp: datetime
+    tags: set[str]
+    file_path: Path
 
-article = Article(title="Hello", published=datetime.now())
-json_str = article.json()  # Uses custom serializer for datetime objects
+transaction = Transaction(
+    id="tx_123",
+    amount=Decimal("99.99"),
+    timestamp=datetime.now(),
+    tags={"urgent", "reviewed"},
+    file_path=Path("/data/tx_123.json")
+)
+
+# Serializes with custom handling for Decimal, datetime, set, Path
+json_str = transaction.json()
+print(json_str)
+# {"id": "tx_123", "amount": 99.99, "timestamp": "2025-01-15T10:30:00", ...}
 ```
 
-**Note:** For standard serialization, use Pydantic's native methods:
+**Note:** For standard serialization without custom types, use Pydantic's native methods:
 - `model_dump()` - Convert to dict
 - `model_dump_json()` - Convert to JSON string
 - `model_validate()` - Create from dict
 - `model_validate_json()` - Create from JSON string
 
-## Using Pydantic ConfigDict
+## Using Pydantic ConfigDict Options
 
-Pass Pydantic configuration via `Config.config_dict`:
+You can specify Pydantic configuration options directly in the `Config` class:
 
 ```python
-from pydantic import ConfigDict
-
 class User(PydanticModel):
     class Config:
+        # Our custom options
         apply_transforms = {
             ("email",): [str.lower]
         }
 
-        # Pydantic options
-        config_dict = {
-            "extra": "forbid",  # Reject extra fields
-            "str_strip_whitespace": True,
-            "validate_assignment": True
-        }
+        # Pydantic options (auto-detected and passed to ConfigDict)
+        extra = "forbid"
+        str_strip_whitespace = True
+        frozen = True
 
     email: str
     age: int
 ```
 
-Or use `model_config` directly:
+Alternatively, use `model_config` directly if you don't need our custom features:
 
 ```python
 from pydantic import ConfigDict
@@ -306,11 +325,10 @@ class User(PydanticModel):
         # Custom JSON serializer
         json_serializer = custom_serializer_function
 
-        # Pydantic options
-        config_dict = {
-            "extra": "forbid",
-            "str_strip_whitespace": True
-        }
+        # Pydantic options (auto-detected)
+        extra = "forbid"
+        str_strip_whitespace = True
+        frozen = False
 
     email: str
     username: str
