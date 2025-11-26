@@ -92,11 +92,6 @@ class TestIntegerMath:
         with pytest.raises(ValueError):
             Integer.factorial(-1)
 
-    def test_gcd_basic(self):
-        assert Integer.gcd(48, other=18) == 6
-        assert Integer.gcd(17, other=13) == 1
-        assert Integer.gcd(100, other=25) == 25
-
     def test_lcm_basic(self):
         assert Integer.lcm(12, other=18) == 36
         assert Integer.lcm(5, other=7) == 35

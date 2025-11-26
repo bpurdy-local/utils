@@ -33,7 +33,6 @@ from utils.path import Path
 from utils.pydantic import Field as PydanticField
 from utils.pydantic import Validator as PydanticValidator
 from utils.random_utils import Random
-from utils.regex import Regex
 from utils.session import Session
 from utils.string import String
 from utils.terminal import Terminal
@@ -47,9 +46,8 @@ __all__ = [
     "Datetime",
     "Dict",
     "Path",
-    "Regex",
-    "Random",
     "FileIO",
+    "Random",
     "Decorators",
     "Validator",
     "Logger",

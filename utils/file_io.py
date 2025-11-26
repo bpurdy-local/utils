@@ -1,4 +1,4 @@
-from __future__ import annotations
+"""FileIO utility class - delegates to Path for backward compatibility."""
 
 from pathlib import Path as PathLib
 from typing import Any
@@ -7,51 +7,55 @@ from utils.path import Path
 
 
 class FileIO:
-    """Static utility class for file I/O operations (delegates to Path class)."""
+    """Static utility class for file I/O operations.
+
+    This class delegates to the Path class for all operations.
+    It exists for backward compatibility and API consistency.
+    """
 
     @staticmethod
-    def read(filepath: str | PathLib, *, encoding: str = "utf-8") -> str:
+    def read(path: str | PathLib, *, encoding: str = "utf-8") -> str:
         """Read text content from file."""
-        return Path.read(filepath, encoding=encoding)
+        return Path.read(path, encoding=encoding)
 
     @staticmethod
-    def write(filepath: str | PathLib, *, content: str, encoding: str = "utf-8") -> int:
+    def write(path: str | PathLib, *, content: str, encoding: str = "utf-8") -> int:
         """Write text content to file."""
-        return Path.write(filepath, content=content, encoding=encoding)
+        return Path.write(path, content=content, encoding=encoding)
 
     @staticmethod
-    def read_lines(filepath: str | PathLib, *, encoding: str = "utf-8") -> list[str]:
+    def read_lines(path: str | PathLib, *, encoding: str = "utf-8") -> list[str]:
         """Read file content as list of lines."""
-        return Path.read_lines(filepath, encoding=encoding)
+        return Path.read_lines(path, encoding=encoding)
 
     @staticmethod
-    def write_lines(filepath: str | PathLib, *, lines: list[str], encoding: str = "utf-8") -> int:
+    def write_lines(path: str | PathLib, *, lines: list[str], encoding: str = "utf-8") -> int:
         """Write list of lines to file."""
-        return Path.write_lines(filepath, lines=lines, encoding=encoding)
+        return Path.write_lines(path, lines=lines, encoding=encoding)
 
     @staticmethod
-    def read_json(filepath: str | PathLib, *, encoding: str = "utf-8") -> Any:
+    def read_json(path: str | PathLib, *, encoding: str = "utf-8") -> Any:
         """Read and parse JSON from file."""
-        return Path.read_json(filepath, encoding=encoding)
+        return Path.read_json(path, encoding=encoding)
 
     @staticmethod
     def write_json(
-        filepath: str | PathLib, *, data: Any, encoding: str = "utf-8", indent: int = 2
+        path: str | PathLib, *, data: Any, encoding: str = "utf-8", indent: int = 2
     ) -> int:
         """Write data to file as JSON."""
-        return Path.write_json(filepath, data=data, encoding=encoding, indent=indent)
+        return Path.write_json(path, data=data, encoding=encoding, indent=indent)
 
     @staticmethod
-    def ensure_dir(dirpath: str | PathLib) -> None:
+    def ensure_dir(path: str | PathLib) -> None:
         """Ensure directory exists, creating it if necessary."""
-        Path.ensure_dir(dirpath)
+        return Path.ensure_dir(path)
 
     @staticmethod
-    def copy(source: str | PathLib, *, destination: str | PathLib) -> PathLib:
+    def copy(path: str | PathLib, *, destination: str | PathLib) -> PathLib:
         """Copy file or directory to destination."""
-        return Path.copy(source, destination=destination)
+        return Path.copy(path, destination=destination)
 
     @staticmethod
-    def move(source: str | PathLib, *, destination: str | PathLib) -> PathLib:
+    def move(path: str | PathLib, *, destination: str | PathLib) -> PathLib:
         """Move file or directory to destination."""
-        return Path.move(source, destination=destination)
+        return Path.move(path, destination=destination)

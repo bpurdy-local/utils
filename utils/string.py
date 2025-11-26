@@ -103,11 +103,6 @@ class String:
         return String.slug(text)
 
     @staticmethod
-    def title_case(text: str) -> str:
-        """Convert string to Title Case format."""
-        return text.title()
-
-    @staticmethod
     def reverse(text: str) -> str:
         """Reverse the characters in a string.
 
@@ -126,26 +121,6 @@ class String:
             'helloworld'
         """
         return "".join(text.split())
-
-    @staticmethod
-    def pad_left(text: str, *, width: int, fillchar: str = " ") -> str:
-        """Pad string on the left to specified width.
-
-        Examples:
-            >>> String.pad_left("7", width=3, fillchar="0")
-            '007'
-        """
-        return text.rjust(width, fillchar)
-
-    @staticmethod
-    def pad_right(text: str, *, width: int, fillchar: str = " ") -> str:
-        """Pad string on the right to specified width."""
-        return text.ljust(width, fillchar)
-
-    @staticmethod
-    def pad_center(text: str, *, width: int, fillchar: str = " ") -> str:
-        """Center string within specified width with padding."""
-        return text.center(width, fillchar)
 
     @staticmethod
     def remove_prefix(text: str, *, prefix: str) -> str:

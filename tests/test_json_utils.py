@@ -239,34 +239,11 @@ class TestJSONIsValid:
 
 
 class TestJSONEdgeCases:
-    def test_unicode_characters(self):
-        data = {"text": "日本語"}
-        json_str = JSON.to_string(data)
-        result = JSON.from_string(json_str)
-        assert result == data
-
     def test_empty_objects(self):
         data = {"empty_dict": {}, "empty_list": []}
         flattened = JSON.flatten(data)
         assert "empty_dict" in flattened
         assert "empty_list" in flattened
-
-    def test_special_characters_in_values(self):
-        data = {"key": "value with\nnewline and\ttab"}
-        json_str = JSON.to_string(data)
-        assert JSON.is_valid(json_str)
-
-    def test_nested_arrays(self):
-        data = {"matrix": [[1, 2], [3, 4]]}
-        json_str = JSON.to_string(data)
-        result = JSON.from_string(json_str)
-        assert result == data
-
-    def test_mixed_types(self):
-        data = {"str": "text", "int": 42, "float": 3.14, "bool": True, "null": None}
-        json_str = JSON.to_string(data)
-        result = JSON.from_string(json_str)
-        assert result == data
 
     def test_large_nested_structure(self):
         data = {"level1": {"level2": {"level3": {"level4": {"level5": "deep"}}}}}

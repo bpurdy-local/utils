@@ -174,16 +174,6 @@ class Integer:
         return result
 
     @staticmethod
-    def gcd(n: int, *, other: int) -> int:
-        """Calculate greatest common divisor of two integers.
-
-        Examples:
-            >>> Integer.gcd(48, other=18)
-            6
-        """
-        return math.gcd(n, other)
-
-    @staticmethod
     def lcm(n: int, *, other: int) -> int:
         """Calculate least common multiple of two integers.
 

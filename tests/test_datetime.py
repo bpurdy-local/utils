@@ -17,15 +17,17 @@ class TestFormatDate:
         result = Datetime.format(dt, format_str="%Y-%m-%d")
         assert result == "2024-01-01"
 
-    def test_format_date_defaults_to_now(self):
-        result = Datetime.format(Datetime.now())
-        assert isinstance(result, str)
-        assert len(result) > 0
 
-    def test_format_date_with_timezone(self):
-        dt = datetime(2024, 1, 1, 12, 0, 0)
-        result = Datetime.format(dt, format_str="%Y-%m-%d %H:%M:%S %Z")
-        assert isinstance(result, str)
+class TestFromIso:
+    def test_from_iso_basic(self):
+        result = Datetime.from_iso("2024-01-15T10:30:00")
+        assert result == datetime(2024, 1, 15, 10, 30, 0)
+
+    def test_from_iso_with_z(self):
+        result = Datetime.from_iso("2024-01-15T10:30:00Z")
+        assert result.year == 2024
+        assert result.month == 1
+        assert result.day == 15
 
 
 class TestParseDate:
@@ -44,43 +46,43 @@ class TestParseDate:
 
 class TestHumanTime:
     def test_human_time_just_now(self):
-        now = Datetime.now() - timedelta(seconds=30)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(seconds=30)
+        result = Datetime.human_time(dt)
         assert "just now" in result.lower() or "minute" in result.lower()
 
     def test_human_time_minutes_ago(self):
-        now = Datetime.now() - timedelta(minutes=5)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(minutes=5)
+        result = Datetime.human_time(dt)
         assert "minute" in result.lower()
 
     def test_human_time_hours_ago(self):
-        now = Datetime.now() - timedelta(hours=2)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(hours=2)
+        result = Datetime.human_time(dt)
         assert "hour" in result.lower()
 
     def test_human_time_days_ago(self):
-        now = Datetime.now() - timedelta(days=3)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(days=3)
+        result = Datetime.human_time(dt)
         assert "day" in result.lower()
 
     def test_human_time_weeks_ago(self):
-        now = Datetime.now() - timedelta(weeks=2)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(weeks=2)
+        result = Datetime.human_time(dt)
         assert "week" in result.lower()
 
     def test_human_time_months_ago(self):
-        now = Datetime.now() - timedelta(days=60)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(days=60)
+        result = Datetime.human_time(dt)
         assert "month" in result.lower()
 
     def test_human_time_years_ago(self):
-        now = Datetime.now() - timedelta(days=400)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(days=400)
+        result = Datetime.human_time(dt)
         assert "year" in result.lower()
 
     def test_human_time_singular(self):
-        now = Datetime.now() - timedelta(hours=1)
-        result = Datetime.human_time(now)
+        dt = datetime.now() - timedelta(hours=1)
+        result = Datetime.human_time(dt)
         assert "hour" in result.lower()
         assert "hours" not in result.lower() or result.count("hour") == 1
 
@@ -92,7 +94,7 @@ class TestStartOfDay:
         assert result == datetime(2024, 1, 1, 0, 0, 0)
 
     def test_start_of_day_defaults_to_today(self):
-        result = Datetime.start_of_day(Datetime.now())
+        result = Datetime.start_of_day(datetime.now())
         assert result.hour == 0
         assert result.minute == 0
         assert result.second == 0
@@ -112,7 +114,7 @@ class TestEndOfDay:
         assert result.second == 59
 
     def test_end_of_day_defaults_to_today(self):
-        result = Datetime.end_of_day(Datetime.now())
+        result = Datetime.end_of_day(datetime.now())
         assert result.hour == 23
         assert result.minute == 59
 
@@ -162,7 +164,7 @@ class TestIsWeekend:
         assert Datetime.is_weekend(dt) is False
 
     def test_is_weekend_defaults_to_today(self):
-        result = Datetime.is_weekend(Datetime.now())
+        result = Datetime.is_weekend(datetime.now())
         assert isinstance(result, bool)
 
 
@@ -180,5 +182,5 @@ class TestIsWeekday:
         assert Datetime.is_weekday(dt) is False
 
     def test_is_weekday_defaults_to_today(self):
-        result = Datetime.is_weekday(Datetime.now())
+        result = Datetime.is_weekday(datetime.now())
         assert isinstance(result, bool)

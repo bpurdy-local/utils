@@ -224,13 +224,6 @@ class Iterable:
         return result
 
     @staticmethod
-    def sort_by(
-        items: list[T], *, key: Callable[[T], Any] | None = None, reverse: bool = False
-    ) -> list[T]:
-        """Sort items by key function."""
-        return sorted(items, key=key, reverse=reverse)  # type: ignore
-
-    @staticmethod
     def take(items: list[T], *, n: int) -> list[T]:
         """Take first n items from list."""
         return items[:n]

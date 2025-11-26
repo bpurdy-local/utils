@@ -96,13 +96,6 @@ class Datetime:
         return datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
 
     @staticmethod
-    def from_timestamp(timestamp: float, *, tz: tzinfo | None = None) -> datetime:
-        """Create datetime from Unix timestamp."""
-        if tz is not None:
-            return datetime.fromtimestamp(timestamp, tz=tz)
-        return datetime.fromtimestamp(timestamp)
-
-    @staticmethod
     def format(dt: datetime, *, format_str: str = "%Y-%m-%d %H:%M:%S") -> str:
         """Format datetime using specified format string.
 
@@ -113,18 +106,6 @@ class Datetime:
             '2024-01-15'
         """
         return dt.strftime(format_str)
-
-    @staticmethod
-    def to_iso(dt: datetime) -> str:
-        """Convert datetime to ISO 8601 format string."""
-        return dt.isoformat()
-
-    @staticmethod
-    def now(*, tz: tzinfo | None = None) -> datetime:
-        """Get current datetime, optionally in specified timezone."""
-        if tz is not None:
-            return datetime.now(tz)
-        return datetime.now()
 
     @staticmethod
     def human_time(dt: datetime, *, now: datetime | None = None) -> str:
@@ -260,31 +241,6 @@ class Datetime:
     def to_rfc822(dt: datetime) -> str:
         """Convert datetime to RFC 822 format string."""
         return dt.strftime("%a, %d %b %Y %H:%M:%S %z") or dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
-
-    @staticmethod
-    def to_rfc3339(dt: datetime) -> str:
-        """Convert datetime to RFC 3339 format string."""
-        return dt.isoformat()
-
-    @staticmethod
-    def to_date_string(dt: datetime) -> str:
-        """Convert datetime to date string (YYYY-MM-DD)."""
-        return dt.strftime("%Y-%m-%d")
-
-    @staticmethod
-    def to_time_string(dt: datetime) -> str:
-        """Convert datetime to time string (HH:MM:SS)."""
-        return dt.strftime("%H:%M:%S")
-
-    @staticmethod
-    def to_datetime_string(dt: datetime) -> str:
-        """Convert datetime to datetime string (YYYY-MM-DD HH:MM:SS)."""
-        return dt.strftime("%Y-%m-%d %H:%M:%S")
-
-    @staticmethod
-    def to_timestamp(dt: datetime) -> float:
-        """Convert datetime to Unix timestamp."""
-        return dt.timestamp()
 
     @staticmethod
     def to_readable(dt: datetime) -> str:

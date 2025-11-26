@@ -2,8 +2,6 @@ import hashlib
 import random
 import secrets
 import string
-import uuid
-from typing import Any
 
 
 class Random:
@@ -63,69 +61,6 @@ class Random:
         result = list(items)
         random.shuffle(result)
         return result
-
-    @staticmethod
-    def sample(items: list, *, k: int) -> list:  # type: ignore[misc]
-        """Select k random items from list without replacement.
-
-        Examples:
-            >>> result = Random.sample([1, 2, 3, 4, 5], k=3)
-            >>> len(result)
-            3
-            >>> all(item in [1, 2, 3, 4, 5] for item in result)
-            True
-        """
-        return random.sample(items, k)
-
-    @staticmethod
-    def choice(items: list) -> Any:
-        """Select single random item from list.
-
-        Examples:
-            >>> result = Random.choice([1, 2, 3, 4, 5])
-            >>> result in [1, 2, 3, 4, 5]
-            True
-        """
-        return random.choice(items)
-
-    @staticmethod
-    def uuid4() -> str:
-        """Generate random UUID4 string.
-
-        Examples:
-            >>> result = Random.uuid4()
-            >>> len(result)
-            36
-            >>> result.count('-')
-            4
-        """
-        return str(uuid.uuid4())
-
-    @staticmethod
-    def uuid1() -> str:
-        """Generate UUID1 string based on host and time.
-
-        Examples:
-            >>> result = Random.uuid1()
-            >>> len(result)
-            36
-            >>> result.count('-')
-            4
-        """
-        return str(uuid.uuid1())
-
-    @staticmethod
-    def uuid_string() -> str:
-        """Generate random UUID string (alias for uuid4).
-
-        Examples:
-            >>> result = Random.uuid_string()
-            >>> len(result)
-            36
-            >>> result.count('-')
-            4
-        """
-        return Random.uuid4()
 
     @staticmethod
     def hex(*, length: int = 32) -> str:

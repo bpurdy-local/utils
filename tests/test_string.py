@@ -91,12 +91,6 @@ class TestStringCaseConversions:
     def test_kebab_case_special_chars(self):
         assert String.kebab_case("Hello World!") == "hello-world"
 
-    def test_title_case_basic(self):
-        assert String.title_case("hello world") == "Hello World"
-
-    def test_title_case_mixed(self):
-        assert String.title_case("hELLo WoRLd") == "Hello World"
-
     def test_slug_basic(self):
         assert String.slug("Hello World!") == "hello-world"
 
@@ -125,29 +119,6 @@ class TestStringManipulation:
 
     def test_remove_whitespace_tabs(self):
         assert String.remove_whitespace("hello\tworld") == "helloworld"
-
-    def test_pad_left_basic(self):
-        assert String.pad_left("hello", width=10) == "     hello"
-
-    def test_pad_left_custom_char(self):
-        assert String.pad_left("hello", width=10, fillchar="*") == "*****hello"
-
-    def test_pad_left_already_longer(self):
-        assert String.pad_left("hello world", width=5) == "hello world"
-
-    def test_pad_right_basic(self):
-        assert String.pad_right("hello", width=10) == "hello     "
-
-    def test_pad_right_custom_char(self):
-        assert String.pad_right("hello", width=10, fillchar="*") == "hello*****"
-
-    def test_pad_center_basic(self):
-        result = String.pad_center("hello", width=10)
-        assert len(result) == 10
-        assert result.strip() == "hello"
-
-    def test_pad_center_custom_char(self):
-        assert String.pad_center("hi", width=6, fillchar="*") == "**hi**"
 
     def test_remove_prefix_exists(self):
         assert String.remove_prefix("prefix_hello", prefix="prefix_") == "hello"

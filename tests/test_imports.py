@@ -25,9 +25,8 @@ def test_can_import_io_utilities():
 
 def test_can_import_pattern_utilities():
     """Verify pattern matching and validation utilities can be imported."""
-    from utils import Regex, Validator
+    from utils import Validator
 
-    assert Regex is not None
     assert Validator is not None
 
 
