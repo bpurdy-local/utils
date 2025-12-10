@@ -1,0 +1,276 @@
+# =============================================================================
+# .gitconfig - Git configuration
+# =============================================================================
+# Copy to ~/.gitconfig or include: [include] path = /path/to/this/file
+
+[user]
+    # Set your identity (required)
+    # name = Your Name
+    # email = your.email@example.com
+
+[core]
+    editor = vim
+    pager = less -FRX
+    autocrlf = input          # Convert CRLF to LF on commit (use 'true' on Windows)
+    whitespace = fix          # Fix whitespace issues
+    excludesfile = ~/.gitignore_global
+    # Improve performance on large repos
+    preloadindex = true
+    fscache = true
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true             # Rebase instead of merge on pull
+    ff = only                 # Only allow fast-forward merges
+
+[push]
+    default = current         # Push current branch to same name on remote
+    autoSetupRemote = true    # Auto setup remote tracking
+    followTags = true         # Push tags with commits
+
+[fetch]
+    prune = true              # Auto-delete stale remote branches
+    pruneTags = true          # Auto-delete stale remote tags
+
+[merge]
+    ff = false                # Create merge commits (for history)
+    conflictstyle = diff3     # Show original in conflicts
+    tool = vimdiff
+
+[rebase]
+    autoStash = true          # Auto stash/unstash during rebase
+    autoSquash = true         # Auto squash fixup! and squash! commits
+
+[diff]
+    colorMoved = zebra        # Highlight moved lines differently
+    algorithm = histogram     # Better diff algorithm
+    tool = vimdiff
+
+[status]
+    showUntrackedFiles = all  # Show all untracked files
+    short = true              # Short status by default
+
+[log]
+    abbrevCommit = true       # Short commit hashes
+    decorate = short          # Show branch names
+
+[color]
+    ui = auto
+    branch = auto
+    diff = auto
+    status = auto
+
+[color "branch"]
+    current = yellow reverse
+    local = yellow
+    remote = green
+
+[color "diff"]
+    meta = yellow bold
+    frag = magenta bold
+    old = red bold
+    new = green bold
+
+[color "status"]
+    added = green
+    changed = yellow
+    untracked = red
+
+# -----------------------------------------------------------------------------
+# ALIASES
+# -----------------------------------------------------------------------------
+[alias]
+    # Status and info
+    s = status -sb
+    st = status
+    info = remote show origin
+
+    # Branches
+    b = branch
+    ba = branch -a
+    bd = branch -d
+    bD = branch -D
+    br = branch -r
+
+    # Checkout
+    co = checkout
+    cob = checkout -b
+    com = checkout main
+    cod = checkout develop
+
+    # Commits
+    c = commit
+    cm = commit -m
+    ca = commit --amend
+    can = commit --amend --no-edit
+
+    # Add
+    a = add
+    aa = add -A
+    ap = add -p              # Interactive staging
+
+    # Diff
+    d = diff
+    ds = diff --staged
+    dc = diff --cached
+    dw = diff --word-diff
+
+    # Log - various formats
+    l = log --oneline -20
+    lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    lga = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all
+    ll = log --pretty=format:'%C(yellow)%h%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --numstat
+    lp = log -p              # Log with patches
+    today = log --since='midnight' --oneline
+    week = log --since='1 week ago' --oneline
+    who = shortlog -sne      # Contributors
+
+    # Push/Pull
+    p = push
+    pu = push -u origin HEAD
+    pf = push --force-with-lease
+    pl = pull
+    f = fetch
+    fa = fetch --all
+
+    # Stash
+    ss = stash save
+    sl = stash list
+    sp = stash pop
+    sa = stash apply
+    sd = stash drop
+
+    # Reset
+    unstage = reset HEAD --
+    undo = reset --soft HEAD~1
+    discard = checkout --
+    nuke = reset --hard HEAD
+
+    # Rebase
+    rb = rebase
+    rbi = rebase -i
+    rbc = rebase --continue
+    rba = rebase --abort
+    rbs = rebase --skip
+
+    # Merge
+    m = merge
+    ma = merge --abort
+
+    # Tags
+    t = tag
+    tl = tag -l
+    td = tag -d
+
+    # Remote
+    r = remote
+    rv = remote -v
+    ra = remote add
+
+    # Cleanup
+    cleanup = !git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -n 1 git branch -d
+    prune-all = !git remote prune origin && git gc
+
+    # Useful shortcuts
+    wip = !git add -A && git commit -m 'WIP'
+    unwip = reset HEAD~1
+    save = !git add -A && git commit -m 'SAVEPOINT'
+
+    # Show aliases
+    aliases = config --get-regexp alias
+
+    # Find things
+    find = !git ls-files | grep -i
+    grep = grep -Ii
+
+    # Stats
+    stats = !git shortlog -sn --all --no-merges
+
+    # List files
+    ls = ls-files
+    ignored = ls-files --others --ignored --exclude-standard
+
+    # Cherry pick
+    cp = cherry-pick
+    cpa = cherry-pick --abort
+    cpc = cherry-pick --continue
+
+    # Bisect helpers
+    bisect-start = bisect start
+    bisect-good = bisect good
+    bisect-bad = bisect bad
+    bisect-reset = bisect reset
+
+    # Show last commit
+    last = log -1 HEAD --stat
+
+    # What changed
+    whatchanged = log --oneline --name-status
+
+    # Assume unchanged (for local config files)
+    assume = update-index --assume-unchanged
+    unassume = update-index --no-assume-unchanged
+    assumed = !git ls-files -v | grep ^h | cut -c 3-
+
+    # Undo last commit but keep changes
+    uncommit = reset --soft HEAD~1
+
+# -----------------------------------------------------------------------------
+# URL SHORTCUTS
+# -----------------------------------------------------------------------------
+[url "git@github.com:"]
+    insteadOf = gh:
+    pushInsteadOf = https://github.com/
+
+[url "git@gitlab.com:"]
+    insteadOf = gl:
+
+[url "git@bitbucket.org:"]
+    insteadOf = bb:
+
+# -----------------------------------------------------------------------------
+# TOOLS
+# -----------------------------------------------------------------------------
+[difftool]
+    prompt = false
+
+[mergetool]
+    prompt = false
+    keepBackup = false
+
+# Delta (better diffs) - uncomment if installed
+# [core]
+#     pager = delta
+# [interactive]
+#     diffFilter = delta --color-only
+# [delta]
+#     navigate = true
+#     light = false
+#     side-by-side = true
+#     line-numbers = true
+
+# -----------------------------------------------------------------------------
+# PLATFORM SPECIFIC
+# -----------------------------------------------------------------------------
+[credential]
+    # macOS: use Keychain
+    # helper = osxkeychain
+
+    # Linux: use libsecret or cache
+    # helper = cache --timeout=3600
+
+    # Windows: use manager
+    # helper = manager
+
+# GitHub CLI integration (if installed)
+[credential "https://github.com"]
+    helper = !gh auth git-credential
+
+# -----------------------------------------------------------------------------
+# INCLUDE LOCAL OVERRIDES
+# -----------------------------------------------------------------------------
+[include]
+    # Machine-specific settings (not in version control)
+    path = ~/.gitconfig.local
