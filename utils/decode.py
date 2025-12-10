@@ -47,6 +47,9 @@ class Decode:
             'example.com'
             >>> Decode.fang("1.1.1[.]1")
             '1.1.1.1'
+            >>> Decode.fang("hxxps://example[.]com")
+            'https://example.com'
         """
         result = text.replace("[.]", ".").replace("(.)", ".").replace("[dot]", ".")
+        result = result.replace("hxxp://", "http://").replace("hxxps://", "https://")
         return result

@@ -2,6 +2,7 @@ import hashlib
 import random
 import secrets
 import string
+import uuid as uuid_module
 
 
 class Random:
@@ -122,3 +123,76 @@ class Random:
         """
         random_bytes = secrets.token_bytes(64)
         return hashlib.sha512(random_bytes).hexdigest()
+
+    @staticmethod
+    def uuid() -> str:
+        """Generate random UUID v4.
+
+        Examples:
+            >>> result = Random.uuid()
+            >>> len(result)
+            36
+            >>> result.count('-')
+            4
+        """
+        return str(uuid_module.uuid4())
+
+    @staticmethod
+    def password(
+        *,
+        length: int = 16,
+        uppercase: bool = True,
+        lowercase: bool = True,
+        digits: bool = True,
+        special: bool = True,
+    ) -> str:
+        """Generate a secure random password.
+
+        Examples:
+            >>> result = Random.password(length=20)
+            >>> len(result)
+            20
+            >>> result = Random.password(length=12, special=False)
+            >>> result.isalnum()
+            True
+        """
+        chars = ""
+        if uppercase:
+            chars += string.ascii_uppercase
+        if lowercase:
+            chars += string.ascii_lowercase
+        if digits:
+            chars += string.digits
+        if special:
+            chars += "!@#$%^&*"
+
+        if not chars:
+            chars = string.ascii_letters + string.digits
+
+        return "".join(secrets.choice(chars) for _ in range(length))
+
+    @staticmethod
+    def choice(items: list):
+        """Pick a random item from a list.
+
+        Examples:
+            >>> items = ['a', 'b', 'c']
+            >>> result = Random.choice(items)
+            >>> result in items
+            True
+        """
+        return secrets.choice(items)
+
+    @staticmethod
+    def sample(items: list, *, count: int) -> list:
+        """Sample N random items from a list without replacement.
+
+        Examples:
+            >>> items = [1, 2, 3, 4, 5]
+            >>> result = Random.sample(items, count=3)
+            >>> len(result)
+            3
+            >>> all(item in items for item in result)
+            True
+        """
+        return random.sample(items, count)
